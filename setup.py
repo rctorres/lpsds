@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="rct-fast-ds",
-    version="0.0.1",
+    name="lpsds",
+    version="0.0.2",
     author="Rodrigo Coura Torres",
     author_email="torres.rc@gmail.com",
     description="Helper functions for data science projects.",

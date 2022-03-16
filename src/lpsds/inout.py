@@ -5,14 +5,14 @@ Handles data acquisition, loading and saving operations.
 import sys
 import os
 import pandas as pd
-import handlers
+from .handlers import LocalFileHandler, S3FileHandler
 import pickle
 
 HANDLER_NAME = os.environ.get('FAST_DS_HANDLER', 'LocalFileHandler')
 INPUT_DIR  = os.environ.get('FAST_DS_INPUT_DIR', 'data')
 OUTPUT_DIR = os.environ.get('FAST_DS_OUTPUT_DIR', 'results')
 
-HANDLER = getattr(handlers, HANDLER_NAME)
+HANDLER = getattr(sys.modules[__name__], HANDLER_NAME)
 
 
 def read_fig(full_path_name):
