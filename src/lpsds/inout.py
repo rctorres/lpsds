@@ -8,9 +8,9 @@ import pandas as pd
 from .handlers import LocalFileHandler, S3FileHandler
 import pickle
 
-HANDLER_NAME = os.environ.get('FAST_DS_HANDLER', 'LocalFileHandler')
-INPUT_DIR  = os.environ.get('FAST_DS_INPUT_DIR', 'data')
-OUTPUT_DIR = os.environ.get('FAST_DS_OUTPUT_DIR', 'results')
+HANDLER_NAME = os.environ.get('LPSDS_HANDLER', 'LocalFileHandler')
+INPUT_DIR  = os.environ.get('LPSDS_INPUT_DIR', 'data')
+OUTPUT_DIR = os.environ.get('LPSDS_OUTPUT_DIR', 'results')
 
 HANDLER = getattr(sys.modules[__name__], HANDLER_NAME)
 

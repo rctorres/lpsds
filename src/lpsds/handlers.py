@@ -4,7 +4,7 @@ import pandas as pd
 import s3fs
 from contextlib import contextmanager
 
-BUCKET = os.environ.get('FAST_DS_BUCKET')
+BUCKET = os.environ.get('LPSDS_BUCKET')
 
 class FileHandler():
     def __init__(self, bucket=BUCKET):
