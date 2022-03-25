@@ -11,6 +11,23 @@ import pickle
 HANDLER_NAME = os.environ.get('LPSDS_HANDLER', 'LocalFileHandler')
 HANDLER = getattr(sys.modules[__name__], HANDLER_NAME)
 
+def get_path(dir_name='', prefix='', fname=''):
+    """
+    def get_path(dir_name='', prefix='', fname='')
+
+    Returns the full path for a given file or a given path (if filename is omitted)
+    taking into consideration the handler being used.
+
+    Input parameters:
+      - dir_name: base directory.
+      - prefix: subdirectory under "dir_name" where the image file will be saved.
+      - fname: file name.
+    
+    Return: the location / filename full path.
+
+    """
+    return HANDLER.get_full_path(dir_name, prefix, fname)
+
 
 def read_fig(full_path_name):
     with HANDLER.fopen(full_path_name, 'rb') as image_content:
