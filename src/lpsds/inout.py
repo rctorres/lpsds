@@ -9,9 +9,6 @@ from .handlers import LocalFileHandler, S3FileHandler
 import pickle
 
 HANDLER_NAME = os.environ.get('LPSDS_HANDLER', 'LocalFileHandler')
-INPUT_DIR  = os.environ.get('LPSDS_INPUT_DIR', 'data')
-OUTPUT_DIR = os.environ.get('LPSDS_OUTPUT_DIR', 'results')
-
 HANDLER = getattr(sys.modules[__name__], HANDLER_NAME)
 
 
@@ -22,7 +19,7 @@ def read_fig(full_path_name):
 
 def to_fig(fig, full_path_name, tight=True, remove_title=False):
     """
-    to_fig(fig, fname, case_name='', dir_name=OUTPUT_DIR, tight=True, remove_title=False)
+    to_fig(fig, fname, case_name='', dir_name='', tight=True, remove_title=False)
 
     Saves a matplotlib compatible plot in "dir_name/prefix/fname.pdf"
     Input parameters:
