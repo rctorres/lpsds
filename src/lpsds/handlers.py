@@ -4,10 +4,9 @@ import pandas as pd
 import s3fs
 from contextlib import contextmanager
 
-BUCKET = os.environ.get('LPSDS_BUCKET')
 
 class FileHandler():
-    def __init__(self, bucket=BUCKET):
+    def __init__(self, bucket):
         self.bucket = bucket
     def get_full_path(self, dir_name, prefix='', fname=''):
         raise NotImplemented
@@ -17,7 +16,7 @@ class FileHandler():
         
         
 class S3FileHandler(FileHandler):
-    def __init__(self, bucket=BUCKET):
+    def __init__(self, bucket):
         super().__init__(bucket)
 
     def get_full_path(self, dir_name='', prefix='', fname=''):
@@ -32,7 +31,7 @@ class S3FileHandler(FileHandler):
 
         
 class LocalFileHandler(FileHandler):    
-    def __init__(self, bucket=BUCKET):
+    def __init__(self, bucket):
         super().__init__(bucket)
 
     def get_full_path(self, dir_name='', prefix='', fname=''):

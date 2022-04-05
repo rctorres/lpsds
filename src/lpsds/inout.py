@@ -9,7 +9,8 @@ from .handlers import LocalFileHandler, S3FileHandler
 import pickle
 
 HANDLER_NAME = os.environ.get('LPSDS_HANDLER', 'LocalFileHandler')
-HANDLER = getattr(sys.modules[__name__], HANDLER_NAME)
+BUCKET = os.environ.get('LPSDS_BUCKET')
+HANDLER = getattr(sys.modules[__name__], HANDLER_NAME)(BUCKET)
 
 def get_path(dir_name='', prefix='', fname=''):
     """
