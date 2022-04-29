@@ -34,7 +34,7 @@ def bootstrap_estimate(vec, ci=95, n_boot=1000, seed=None):
     return mean, err_min, err_max
 
 
-def sp(tp: np.array, tn: np.array) -> np.array:
+def sp_index(tp: np.array, tn: np.array) -> np.array:
   """
   def sp(tp: np.array, tn: np.array) -> np.array
 
