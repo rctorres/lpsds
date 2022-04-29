@@ -111,7 +111,20 @@ class RangeAverage:
 
     
 class BooleanEncode:
-    def __init__(self, boolean_map, inplace=True, dtype=None):
+    """
+    Creates an Boolean type encoding (+1, -1, 0) for categories that can be treated as such.
+    Example: employed = ["Yes", "No", "Not Informed"] would become [+1, -1, 0].
+    """
+    def __init__(self, boolean_map: map, inplace: bool=True, dtype=None):
+        """
+        def __init__(self, boolean_map, inplace=True, dtype=None):
+
+        input parameters:
+          - boolean_map: a map where keys are categorical values and value is the number (+1, -1, 0)
+            to be assigned to it.
+        - inplace: whether to work on a copy of the data or not.
+          - dtype: data type to cast results into.
+        """
         self.boolean_map = boolean_map
         self.inplace = inplace
         self.dtype = dtype
@@ -190,6 +203,8 @@ class SmartFloatCasting:
         Input parameters:
           - mod_list: a list of tuples in the shape (orig val, new val). Orig val may be a regexp.
                       This list will be iterated and the replacement found in each iteration will be applied.
+          - inplace: whether to work on a copy of the data or not.
+          - dtype: data type to cast results into.
         """
         self.mod_list = mod_list
         self.inplace = inplace
