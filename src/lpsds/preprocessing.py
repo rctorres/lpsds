@@ -2,24 +2,7 @@
 Handles data pre_processing related operations.
 """
 
-import re
 import numpy as np
-
-
-def standard_nan(df, additional_nan_rep={}, std_nan_val=np.NaN, inplace=False):
-    """
-    Standartized multiple values that should be considered as null into a single value.
-    """
-    to_replace = {
-        'na' : std_nan_val,
-        'nan' : std_nan_val,
-        '' : std_nan_val,
-        '<NA>' : std_nan_val,
-        'NÃO INFORMADO' : std_nan_val,
-    }
-    
-    to_replace.update(additional_nan_rep)
-    return df.replace(to_replace, inplace=inplace)
 
 
 def drop_null_cols(df, threshold=0.6, inplace=False):
@@ -51,9 +34,13 @@ class BooleanEncode:
         self.dtype = dtype
     
     def fit(self, X, y=None, **kwargs):
+        """Dummy function. Nothing is done here."""
         return None
     
     def transform(self, X, **kwargs):
+        """
+        Apply the boolean encoding.
+        """
         if not self.inplace: X = X.copy()
         for c in X.columns:
             X[c].replace(self.boolean_map, inplace=True)
@@ -61,6 +48,7 @@ class BooleanEncode:
         return X
     
     def fit_transform(self, X, y=None, **kwargs):
+        """Fit + transform"""
         return self.transform(X)
 
 
@@ -71,7 +59,7 @@ class StandardNaN:
     Ex: "", "Not Informed", "Not Available", etc -> np.NaN
     """
 
-    def __init__(self, additional_nan_rep: list=[], std_nan_val=np.NaN, inplace: bool=True):
+    def __init__(self, additional_nan_rep: list=None, std_nan_val=np.NaN, inplace: bool=True):
         """
         def __init__(self, additional_nan_rep: dict={}, std_nan_val=np.NaN, inplace: bool=True):
         Class constructor
@@ -95,19 +83,23 @@ class StandardNaN:
         }
 
         #Adding any custom value brought by the user.
-        for v in additional_nan_rep:
-            self.nan_map[v] = std_nan_val
+        if additional_nan_rep:
+            for v in additional_nan_rep:
+                self.nan_map[v] = std_nan_val
 
         self.inplace = inplace
     
     def fit(self, X, y=None, **kwargs):
+        """Dummy function. Nothing is done here."""
         return None
     
     def transform(self, X, **kwargs):
+        """Standartizes multiple NaN references"""
         if not self.inplace: X = X.copy()
         return X.replace(self.nan_map)
     
     def fit_transform(self, X, y=None, **kwargs):
+        """Fit + transform"""
         return self.transform(X)
 
 
@@ -131,9 +123,11 @@ class SmartFloatCasting:
         self.dtype=dtype
     
     def fit(self, X, y=None, **kwargs):
+        """Dummy function. Nothing is done here."""
         return None
 
     def transform(self, X, **kwargs):
+        """Do the smart float casting."""
         if not self.inplace: X = X.copy()
         for c in X.columns:
             for orig, new in self.mod_list:
@@ -141,4 +135,5 @@ class SmartFloatCasting:
         return X
     
     def fit_transform(self, X, y=None, **kwargs):
+        """Fit + transform"""
         return self.transform(X)
