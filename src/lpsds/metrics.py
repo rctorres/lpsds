@@ -1,3 +1,4 @@
+import numpy as np
 from seaborn.algorithms import bootstrap
 
 def bootstrap_estimate(vec, ci=95, n_boot=1000, seed=None):
@@ -24,7 +25,7 @@ def bootstrap_estimate(vec, ci=95, n_boot=1000, seed=None):
         return np.percentile(data, percentiles)
 
     mean = vec.mean()
-    boots = bootstrap(vec, func='mean', n_boot=1000, seed=seed)
+    boots = bootstrap(vec, func='mean', n_boot=n_boot, seed=seed)
     err_min, err_max = percentile_interval(boots, ci)
 
     return mean, err_min, err_max
