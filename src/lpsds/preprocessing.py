@@ -179,10 +179,21 @@ class StandardNaN:
 
 
 class SmartFloatCasting:
-    def __init__(self, orig_dec_sep=',', dest_dec_sep='.', inplace=True):
-        self.orig_dec_sep = orig_dec_sep
-        self.dest_dec_sep = dest_dec_sep
+    """
+    Cast float represented as strings into a float number by taking into consideration
+    specific thousand and decimal separators.
+    """
+    def __init__(self, mod_list=[(',', '.')], inplace: bool=True, dtype=np.float64):
+        """
+        def __init__(self, mod_list=[(',', '.')], inplace: bool=True, dtype=np.float64)
+
+        Input parameters:
+          - mod_list: a list of tuples in the shape (orig val, new val). Orig val may be a regexp.
+                      This list will be iterated and the replacement found in each iteration will be applied.
+        """
+        self.mod_list = mod_list
         self.inplace = inplace
+        self.dtype=dtype
     
     def fit(self, X, y=None, **kwargs):
         return None
@@ -190,7 +201,8 @@ class SmartFloatCasting:
     def transform(self, X, **kwargs):
         if not self.inplace: X = X.copy()
         for c in X.columns:
-            X[c] = X[c].str.replace(self.orig_dec_sep, self.dest_dec_sep).astype(np.float64)
+            for orig, new in self.mod_list:
+                X[c] = X[c].str.replace(orig, new).astype(self.dtype)
         return X
     
     def fit_transform(self, X, y=None, **kwargs):
