@@ -64,7 +64,6 @@ class BooleanEncode:
         return self.transform(X)
 
 
-    
 class StandardNaN:
     """
     Standartizes multiple NaN representations into an unique representation.
