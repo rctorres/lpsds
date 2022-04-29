@@ -1,4 +1,7 @@
+"""Metric related tools"""
+
 import numpy as np
+from scipy.stats import gmean
 from seaborn.algorithms import bootstrap
 
 def bootstrap_estimate(vec, ci=95, n_boot=1000, seed=None):
@@ -29,3 +32,19 @@ def bootstrap_estimate(vec, ci=95, n_boot=1000, seed=None):
     err_min, err_max = percentile_interval(boots, ci)
 
     return mean, err_min, err_max
+
+
+def sp(tp: np.array, tn: np.array) -> np.array:
+  """
+  def sp(tp: np.array, tn: np.array) -> np.array
+
+  Calculates the SP index, which is given by:
+
+  sp = \sqrt{ \sqrt{tp \times tn} \times \(\frac{tp+tn,2}\) }
+
+  where tp is the true positive values and tn the true negative values.
+
+  Returns: an array with the sp index calculated.
+  """
+  mat = np.array([tp.flatten(), tn.flatten()])
+  return np.sqrt( gmean(mat, axis=0) * mat.mean(axis=0) )
