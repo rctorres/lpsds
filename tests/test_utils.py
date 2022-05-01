@@ -2,7 +2,7 @@
 
 import pytest
 import pandas as pd
-from utils import keep, ObjectView, to_list
+from utils import keep, ObjectView, to_list, smart_tuple
 
         
 class TestKeep():
@@ -124,3 +124,20 @@ class TestToList:
         ret = to_list(val)
         assert type(ret) is str
         assert ret == val
+
+
+class TestSmartTuple:
+    """Test smart_tuple function"""
+
+    def test_single_value_tuple(self):
+        val = (10,)
+        assert smart_tuple(val) == 10
+
+    def test_multi_value_tuple(self):
+        val = (10, 20, 30)
+        ret = smart_tuple(val)
+        assert type(ret) is tuple
+        assert len(ret) == 3
+        assert ret[0] == 10
+        assert ret[1] == 20
+        assert ret[2] == 30
