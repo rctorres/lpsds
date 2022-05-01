@@ -2,7 +2,7 @@
 
 import pytest
 import pandas as pd
-from utils import keep
+from utils import keep, ObjectView
 
         
 class TestKeep():
@@ -57,3 +57,35 @@ class TestKeep():
         assert ret is not None
         assert len(df) == 5
         assert len(ret) == 2
+
+
+class TestObjectView():
+    """Test ObjectView class"""
+
+    @pytest.fixture
+    def obj(self):
+        """Default ObjectView object"""
+        return ObjectView()
+
+    def test_set_value(self, obj):
+        """Test if the obj.var =  value works"""
+        obj.my_field = 10
+        assert obj['my_field'] == 10
+
+    def test_get_value(self, obj):
+        """Test if we can read the value using the notation 'obj.var'"""
+        obj['my_field'] = 10
+        assert obj.my_field == 10
+
+    def test_attribute_not_found(self, obj):
+        """Test if an AttributeError is raised if a required field does not exists."""
+        obj.my_field = 10
+        with pytest.raises(AttributeError):
+            obj.my_other_field
+    
+    def test_attribute_not_found_for_deletion(self, obj):
+        """Test if an AttributeError is raised if a required field does not exists upon deletion."""
+        obj.my_field = 10
+        with pytest.raises(AttributeError):
+            del obj.my_other_field
+
