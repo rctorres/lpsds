@@ -47,7 +47,7 @@ def sp_index(tp: np.array, tn: np.array) -> np.array:
   Returns: an array with the sp index calculated.
   """
 
-  if type(tp) is np.array: tp = tp.flatten()
-  if type(tn) is np.array: tn = tn.flatten()
+  if type(tp) is np.ndarray: tp = tp.flatten()
+  if type(tn) is np.ndarray: tn = tn.flatten()
   mat = np.array([tp, tn])
-  return np.sqrt( gmean(mat, axis=0) * mat.mean(axis=0) )
+  return np.sqrt( gmean(mat, axis=0) * mat.mean(axis=0) ).flatten()

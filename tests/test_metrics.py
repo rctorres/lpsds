@@ -21,9 +21,16 @@ class TestSPIndex:
 
 
     @pytest.mark.parametrize(("vec1", "vec2"), [ 
-                                                    (np.array([0.9, 0.2, 0.4]), np.array([0.89, 0.4, 0.4])),
-                                                    (np.array([ [0.9, 0.2, 0.4] ]), np.array([ [0.89, 0.4, 0.4] ])),
-                                                    (np.array([ [0.9], [0.2], [0.4] ]), np.array([ [0.89], [0.4], [0.4] ])),
+                                                    (np.array([0.9, 0.2, 0.4]), np.array([0.89, 0.4, 0.4])), # 2 dimensionless vectors
+                                                    (np.array([ [0.9, 0.2, 0.4] ]), np.array([ [0.89, 0.4, 0.4] ])), #2 row vectors
+                                                    (np.array([ [0.9], [0.2], [0.4] ]), np.array([ [0.89], [0.4], [0.4] ])), #2 col vectors
+                                                    (np.array([0.9, 0.2, 0.4]), np.array([ [0.89, 0.4, 0.4] ])), # mixed dimensionless $ row
+                                                    (np.array([0.9, 0.2, 0.4]), np.array([ [0.89], [0.4], [0.4] ])), # 2 mixed dimwnsionless & cols
+                                                    (np.array([ [0.9, 0.2, 0.4] ]), np.array([0.89, 0.4, 0.4])), # mixed row & dimensionless
+                                                    (np.array([ [0.9, 0.2, 0.4] ]), np.array([ [0.89], [0.4], [0.4] ])), # mixed rown & col
+                                                    (np.array([ [0.9], [0.2], [0.4] ]), np.array([0.89, 0.4, 0.4])), # mixed col & dimensionless
+                                                    (np.array([ [0.9], [0.2], [0.4] ]), np.array([ [0.89, 0.4, 0.4] ])), # mixed col & row
+
                                                 ])
     def test_arrays(self, vec1, vec2):
         """Tests array case"""
