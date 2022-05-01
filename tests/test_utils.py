@@ -2,7 +2,7 @@
 
 import pytest
 import pandas as pd
-from utils import keep, ObjectView
+from utils import keep, ObjectView, to_list
 
         
 class TestKeep():
@@ -59,7 +59,7 @@ class TestKeep():
         assert len(ret) == 2
 
 
-class TestObjectView():
+class TestObjectView:
     """Test ObjectView class"""
 
     @pytest.fixture
@@ -89,3 +89,38 @@ class TestObjectView():
         with pytest.raises(AttributeError):
             del obj.my_other_field
 
+
+
+class TestToList:
+    """Test to_list function"""
+
+    def test_value_to_list(self):
+        """Test if a value gets converted to a list"""
+        ret = to_list(10)
+        assert type(ret) is list
+        assert len(ret) == 1
+        assert ret[0] == 10
+
+    def assert_list_remains_as_list(self):
+        """A passed list must be returned unchanged"""
+        val = [1]
+        ret = to_list(val)
+        assert type(ret) is list
+        assert len(ret) == 1
+        assert ret[0] == 10
+
+    def assert_list_remains_as_tuple(self):
+        """A passed tuple must be returned unchanged"""
+        val = (10, 20)
+        ret = to_list(val)
+        assert type(ret) is tuple
+        assert len(ret) == 2
+        assert ret[0] == 10
+        assert ret[1] == 20
+
+    def assert_string_remains_as_string(self):
+        """A passed string must be returned unchanged"""
+        val = "my test string"
+        ret = to_list(val)
+        assert type(ret) is str
+        assert ret == val
