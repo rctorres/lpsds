@@ -2,6 +2,7 @@
 Handles data pre_processing related operations.
 """
 
+import re
 import numpy as np
 
 
@@ -75,12 +76,12 @@ class StandardNaN:
 
         #Original NaN reps
         self.nan_rep = [
-             r'(?i)na',
-            r'(?i)nan',
-            r'^[\s\-]*$',
-            r'(?i)<NA>',
-            r'(?i)NÃO INFORMADO',
-            r'(?i)None',
+            re.compile(r'na', re.IGNORECASE),
+            re.compile(r'nan', re.IGNORECASE),
+            re.compile(r'^[\s\-]*$', re.IGNORECASE),
+            re.compile(r'<NA>', re.IGNORECASE),
+            re.compile(r'NÃO INFORMADO', re.IGNORECASE),
+            re.compile(r'None', re.IGNORECASE),
         ]
 
         if additional_nan_rep: self.nan_rep += additional_nan_rep
