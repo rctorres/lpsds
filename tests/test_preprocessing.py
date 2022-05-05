@@ -113,3 +113,35 @@ class TestStandardNaN:
         assert np.isnan(ret.d.iloc[1])
         assert np.isnan(ret.d.iloc[2])
 
+    def test_inplace_true(self):
+        """Test inplace = True"""
+
+        df = pd.DataFrame({
+            'a' : ['To Keep', '<na>'], 
+            'b' : ['None', 'To Keep'], 
+        })
+
+        obj = StandardNaN(inplace=True)
+        obj.fit_transform(df)
+
+        assert df.a.iloc[0] == 'To Keep'
+        assert np.isnan(df.a.iloc[1])
+        assert np.isnan(df.b.iloc[0])
+        assert df.b.iloc[1] == 'To Keep'
+
+
+    def test_inplace_false(self):
+        """Test inplace = False"""
+
+        df = pd.DataFrame({
+            'a' : ['To Keep', '<na>'], 
+            'b' : ['None', 'To Keep'], 
+        })
+
+        obj = StandardNaN(inplace=False)
+        obj.fit_transform(df)
+
+        assert df.a.iloc[0] == 'To Keep'
+        assert df.a.iloc[1] == '<na>'
+        assert df.b.iloc[0] == 'None'
+        assert df.b.iloc[1] == 'To Keep'
