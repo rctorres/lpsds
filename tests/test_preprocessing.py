@@ -1,15 +1,59 @@
 import pytest
 
-from preprocessing import StandardNaN, BooleanEncode, SmartFloatCasting
+from preprocessing import StandardNaN, BooleanEncode, SmartFloatCasting, drop_null_cols
 import pandas as pd
 import numpy as np
 
+
+class TestFropNullCols:
+    """Test drop_null_cols"""
+
+    @pytest.fixture
+    def df(self):
+        """Test dataset"""
+
+        return pd.DataFrame({
+            'a' : [1,2,3,None],
+            'b' : [111,np.nan,np.nan, None],
+            'c' : [11,22,np.nan, None],
+            'd' : [None,np.nan,np.nan, None],
+        })
+    
+    def test_operation(self, df):
+        """Test normal behavior"""
+        ret = drop_null_cols(df, threshold=0.5)
+        cols = ret.columns
+        assert 'a' in cols
+        assert 'b' not in cols
+        assert 'c' in cols
+        assert 'd' not in cols
+
+
+    def test_inplace_true(self, df):
+        """Test inplace True"""
+        drop_null_cols(df, threshold=0.5, inplace=True)
+        cols = df.columns
+        assert 'a' in cols
+        assert 'b' not in cols
+        assert 'c' in cols
+        assert 'd' not in cols
+
+    
+    def test_inplace_false(self, df):
+        """Test inplace False"""
+        drop_null_cols(df, threshold=0.5, inplace=False)
+        cols = df.columns
+        assert 'a' in cols
+        assert 'b' in cols
+        assert 'c' in cols
+        assert 'd' in cols
 
 class TestBooleanEncode:
     """Test BooleanEncode class"""
 
     @pytest.fixture
     def bool_map(self):
+        """boolean map"""
         return {
             'pos' : +1,
             'neg' : -1,
@@ -18,6 +62,7 @@ class TestBooleanEncode:
     
     @pytest.fixture
     def df(self):
+        """Test dataset"""
         return pd.DataFrame({
             'a' : ['pos', 'neg', None],
             'b' : ['pos', 'pos', 'neg']
