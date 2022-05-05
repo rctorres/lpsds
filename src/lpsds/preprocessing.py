@@ -30,6 +30,10 @@ class BooleanEncode:
         - inplace: whether to work on a copy of the data or not.
           - dtype: data type to cast results into.
         """
+
+        if len(set(boolean_map.items())) > 3:
+            raise ValueError('You cannot have more than 3 values to represent True, False and None')
+
         self.boolean_map = boolean_map
         self.inplace = inplace
         self.dtype = dtype
@@ -43,9 +47,8 @@ class BooleanEncode:
         Apply the boolean encoding.
         """
         if not self.inplace: X = X.copy()
-        for c in X.columns:
-            X[c].replace(self.boolean_map, inplace=True)
-            if self.dtype is not None: X[c] = X[c].astype(self.dtype)
+        X.replace(self.boolean_map, inplace=True)
+        if self.dtype is not None: X = X.astype(self.dtype)
         return X
     
     def fit_transform(self, X, y=None, **kwargs):

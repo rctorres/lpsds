@@ -1,8 +1,89 @@
 import pytest
 
-from preprocessing import StandardNaN
+from preprocessing import StandardNaN, BooleanEncode
 import pandas as pd
 import numpy as np
+
+
+class TestBooleanEncode:
+    """Test BooleanEncode class"""
+
+    @pytest.fixture
+    def bool_map(self):
+        return {
+            'pos' : +1,
+            'neg' : -1,
+            None : 0,
+        }
+    
+    @pytest.fixture
+    def df(self):
+        return pd.DataFrame({
+            'a' : ['pos', 'neg', None],
+            'b' : ['pos', 'pos', 'neg']
+        })
+
+
+    def test_more_3_values(self):
+        """
+        ValueError must be raised 
+        if the map has mopre than 3 distinct values for items
+        """
+        bool_map = dict(
+            pos=+1,
+            neg=-1,
+            other=0,
+            another_pos=+2,
+        )
+        with pytest.raises(ValueError):
+            BooleanEncode(bool_map)
+
+    def test_normal_operation(self, bool_map, df):
+        """Test normal operation"""
+        obj = BooleanEncode(bool_map)
+        ret = obj.fit_transform(df)
+        assert ret.a.iloc[0] == +1
+        assert ret.a.iloc[1] == -1
+        assert ret.a.iloc[2] == 0
+
+        assert ret.b.iloc[0] == +1
+        assert ret.b.iloc[1] == +1
+        assert ret.b.iloc[2] == -1
+
+
+    def test_inplace_true(self, bool_map, df):
+        """Test inplace True"""
+        obj = BooleanEncode(bool_map, inplace=True)
+        obj.fit_transform(df)
+        assert df.a.iloc[0] == +1
+        assert df.a.iloc[1] == -1
+        assert df.a.iloc[2] == 0
+
+        assert df.b.iloc[0] == +1
+        assert df.b.iloc[1] == +1
+        assert df.b.iloc[2] == -1
+
+    def test_inplace_false(self, bool_map, df):
+        """Test inplace False"""
+        obj = BooleanEncode(bool_map, inplace=False)
+        obj.fit_transform(df)
+        assert df.a.iloc[0] == 'pos'
+        assert df.a.iloc[1] == 'neg'
+        assert df.a.iloc[2] is None
+
+        assert df.b.iloc[0] == 'pos'
+        assert df.b.iloc[1] == 'pos'
+        assert df.b.iloc[2] == 'neg'
+
+    def test_dtype(self, bool_map, df):
+        """Test dtype override"""
+        obj = BooleanEncode(bool_map, dtype=np.int8)
+        ret = obj.fit_transform(df)
+        assert str(ret.a.dtype) == 'int8'
+        assert str(ret.b.dtype) == 'int8'
+
+
+
 
 
 class TestStandardNaN:
