@@ -76,12 +76,11 @@ class StandardNaN:
 
         #Original NaN reps
         self.nan_rep = [
-            re.compile(r'na', re.IGNORECASE),
-            re.compile(r'nan', re.IGNORECASE),
+            re.compile(r'^\s*nan?\s*$', re.IGNORECASE),
             re.compile(r'^[\s\-]*$', re.IGNORECASE),
-            re.compile(r'<NA>', re.IGNORECASE),
-            re.compile(r'NÃO INFORMADO', re.IGNORECASE),
-            re.compile(r'None', re.IGNORECASE),
+            re.compile(r'^\s*<NA>\s*$', re.IGNORECASE),
+            re.compile(r'^\s*NÃO INFORMADO\s*$', re.IGNORECASE),
+            re.compile(r'^\s*None\s*$', re.IGNORECASE),
         ]
 
         if additional_nan_rep: self.nan_rep += additional_nan_rep
