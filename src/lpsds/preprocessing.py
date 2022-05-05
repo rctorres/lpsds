@@ -67,27 +67,25 @@ class StandardNaN:
         Input parameters:
           - additional_nan_rep: a list with *additional* values that you wish to standartize
             with an unique NaN representation. By default, the following values are already
-            included: 'na', 'nan', '', '<NA>', 'NÃO INFORMADO'.
+            included: 'na', 'nan', '', '<NA>', 'NÃO INFORMADO', 'None'.
           - std_nan_val: the unique NaN representation that will be used instead of the 
             representations passed.
           - inplace: whether to work on a copy of the data or not.
         """
 
         #Original NaN reps
-        self.nan_map = {
-            'na' : std_nan_val,
-            'nan' : std_nan_val,
-            '' : std_nan_val,
-            '<NA>' : std_nan_val,
-            'NÃO INFORMADO' : std_nan_val,
-        }
+        self.nan_rep = [
+             r'(?i)na',
+            r'(?i)nan',
+            r'^[\s\-]*$',
+            r'(?i)<NA>',
+            r'(?i)NÃO INFORMADO',
+            r'(?i)None',
+        ]
 
-        #Adding any custom value brought by the user.
-        if additional_nan_rep:
-            for v in additional_nan_rep:
-                self.nan_map[v] = std_nan_val
-
+        if additional_nan_rep: self.nan_rep += additional_nan_rep
         self.inplace = inplace
+        self.std_nan_val = std_nan_val
     
     def fit(self, X, y=None, **kwargs):
         """Dummy function. Nothing is done here."""
@@ -96,7 +94,8 @@ class StandardNaN:
     def transform(self, X, **kwargs):
         """Standartizes multiple NaN references"""
         if not self.inplace: X = X.copy()
-        return X.replace(self.nan_map)
+        X.replace(to_replace=self.nan_rep, value=self.std_nan_val, regex=True, inplace=True)
+        return X
     
     def fit_transform(self, X, y=None, **kwargs):
         """Fit + transform"""
