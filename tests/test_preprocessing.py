@@ -1,6 +1,6 @@
 import pytest
 
-from preprocessing import StandardNaN, BooleanEncode
+from preprocessing import StandardNaN, BooleanEncode, SmartFloatCasting
 import pandas as pd
 import numpy as np
 
@@ -226,3 +226,50 @@ class TestStandardNaN:
         assert df.a.iloc[1] == '<na>'
         assert df.b.iloc[0] == 'None'
         assert df.b.iloc[1] == 'To Keep'
+
+
+
+class TestSmartFloatCasting:
+    """Test SmartFloatCasting"""
+    
+    @pytest.fixture
+    def df(self):
+        """Test dataset"""
+        return pd.DataFrame({
+            'a' : ['1,23', '-5',],
+            'b' : ['-23.53', '0',],
+        })
+
+    def test_normal_operation(self, df):
+        """test normal operation"""
+        obj = SmartFloatCasting()
+        ret = obj.fit_transform(df)
+        assert ret.a.iloc[0] == 1.23
+        assert ret.a.iloc[1] == -5
+        assert ret.b.iloc[0] == -23.53
+        assert ret.b.iloc[1] == 0
+
+    def test_inplace_true(self, df):
+        """test inplace True"""
+        obj = SmartFloatCasting(inplace=True)
+        obj.fit_transform(df)
+        assert df.a.iloc[0] == 1.23
+        assert df.a.iloc[1] == -5
+        assert df.b.iloc[0] == -23.53
+        assert df.b.iloc[1] == 0
+
+    def test_inplace_false(self, df):
+        """test inplace False"""
+        obj = SmartFloatCasting(inplace=False)
+        obj.fit_transform(df)
+        assert df.a.iloc[0] == '1,23'
+        assert df.a.iloc[1] == '-5'
+        assert df.b.iloc[0] == '-23.53'
+        assert df.b.iloc[1] == '0'
+
+    def test_dtype(self, df):
+        """test different dtype"""
+        obj = SmartFloatCasting(dtype=np.float32)
+        ret = obj.fit_transform(df)
+        assert str(ret.a.dtype) == 'float32'
+        assert str(ret.b.dtype) == 'float32'
