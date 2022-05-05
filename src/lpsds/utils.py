@@ -1,5 +1,4 @@
 import collections.abc
-import numpy as np
 
 class ObjectView(dict):
     """Data structure that improves a regular map structure so
