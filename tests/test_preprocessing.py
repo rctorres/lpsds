@@ -115,6 +115,20 @@ class TestBooleanEncode:
         with pytest.raises(ValueError):
             BooleanEncode(bool_map)
 
+    def test_more_3_keys(self):
+        """
+        No error must occur if more than 3 keys are given as long as
+        values are no more than 3
+        """
+        bool_map = dict(
+            pos=+1,
+            neg=-1,
+            other=0,
+            another_pos=+1,
+        )
+        BooleanEncode(bool_map)
+        assert True
+
     def test_normal_operation(self, bool_map, df):
         """Test normal operation"""
         obj = BooleanEncode(bool_map)

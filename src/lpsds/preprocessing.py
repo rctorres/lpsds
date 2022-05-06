@@ -38,7 +38,7 @@ class BooleanEncode:
           - dtype: data type to cast results into.
         """
 
-        if len(set(boolean_map.items())) > 3:
+        if len(set(boolean_map.values())) > 3:
             raise ValueError('You cannot have more than 3 values to represent True, False and None')
 
         self.boolean_map = boolean_map
