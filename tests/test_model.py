@@ -1,8 +1,9 @@
 """model module tests"""
 
 import pytest
+import pandas as pd
 import numpy as np
-from model import get_operation_model
+from model import get_operation_model, create_validation_dataset
 
 
 class DummyModel:
@@ -38,7 +39,7 @@ class TestGetOperationModel:
         return np.array([0.2, -1, 0, -0.5, 0.9])
     
     @pytest.fixture
-    def models(self, y_true):
+    def models(self):
         """Dummy models"""
         mod1 = DummyModel(np.array([0.2, +1, 0, -0.5, -0.9]), id='model1') #2 wrongs (+1 and -0.9)
         mod2 = DummyModel(np.array([0.2, -1, -0.1, -0.5, 0.9]), id='model2') #1 wrongs 9-0.1
@@ -81,18 +82,81 @@ class TestGetOperationModel:
 class TesteCreateValidationDataset:
     """Tests create_validation_dataset"""
 
-    def test_default_case(self):
-        """Test behavior with default values"""
-        pass
+    @pytest.fixture
+    def X(self):
+        """Fake X"""
+        return pd.DataFrame({
+            'a' : [11, 21],
+            'b' : [12, 22],
+            })
+    
+    @pytest.fixture
+    def y_true(self):
+        """Fake y"""
+        return np.array([0.2, -1])
 
-    def test_predict_proba(self):
+    @pytest.fixture
+    def y_pred(self):
+        """Fake y"""
+        return np.array([0.1, -0.8])
+
+    @pytest.fixture
+    def model(self, y_pred):
+        """Dummy models"""
+        return DummyModel(y_pred, id='model')
+
+
+    def test_columns_order(self, model, X, y_true):
+        """Test whether the returned columns are OK"""
+        ret = create_validation_dataset(model, X, y_true, proba=False)
+        assert ret.columns[0] == 'a'
+        assert ret.columns[1] == 'b'
+        assert ret.columns[2] == 'y_true'
+        assert ret.columns[3] == 'y_pred'
+
+    def test_values(self, model, X, y_true):
+        """Test whether the returned values are OK"""
+        ret = create_validation_dataset(model, X, y_true, proba=False)
+        assert ret.a.iloc[0] == 11
+        assert ret.a.iloc[1] == 21
+        assert ret.b.iloc[0] == 12
+        assert ret.b.iloc[1] == 22
+        assert ret.y_true.iloc[0] == 0.2
+        assert ret.y_true.iloc[1] == -1
+        assert ret.y_pred.iloc[0] == +1
+        assert ret.y_pred.iloc[1] == -1
+
+
+    def test_predict_proba(self, model, X, y_true):
         """Tests predic probability case"""
-        pass
+        ret = create_validation_dataset(model, X, y_true, proba=True)
+        assert ret.a.iloc[0] == 11
+        assert ret.a.iloc[1] == 21
+        assert ret.b.iloc[0] == 12
+        assert ret.b.iloc[1] == 22
+        assert ret.y_true.iloc[0] == 0.2
+        assert ret.y_true.iloc[1] == -1
+        assert ret.y_pred.iloc[0] == 0.1
+        assert ret.y_pred.iloc[1] == -0.8
 
-    def test_copy_true(self):
+    def test_copy_true(self, model, X, y_true):
         """Test copy = True case for X and y"""
-        pass
+        create_validation_dataset(model, X, y_true, copy=True)
+        assert 'y_true' not in X.columns
+        assert 'y_pred' not in X.columns
+        assert X.a.iloc[0] == 11
+        assert X.a.iloc[1] == 21
+        assert X.b.iloc[0] == 12
+        assert X.b.iloc[1] == 22
 
-    def test_copy_false(self):
+    def test_copy_false(self, model, X, y_true):
         """Test copy = False case for X and y"""
-        pass
+        create_validation_dataset(model, X, y_true, copy=False)
+        assert X.a.iloc[0] == 11
+        assert X.a.iloc[1] == 21
+        assert X.b.iloc[0] == 12
+        assert X.b.iloc[1] == 22
+        assert X.y_true.iloc[0] == 0.2
+        assert X.y_true.iloc[1] == -1
+        assert X.y_pred.iloc[0] == 0.1
+        assert X.y_pred.iloc[1] == -0.8
