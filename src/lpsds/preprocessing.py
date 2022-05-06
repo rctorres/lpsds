@@ -6,12 +6,19 @@ import re
 import numpy as np
 
 
-def drop_null_cols(df, threshold=0.6, inplace=False):
+def drop_null_cols(df, threshold=0.6, inplace=False, std_nan=False, additional_nan_rep: list=None):
     """
+    def drop_null_cols(df, threshold=0.6, inplace=False, std_nan=False, **kwargs)
+
     Remove columns which number of null samples is greater than the specified threshold.
+
+    If std_nan is True, than the function will first standartise all nan values by using
+    StandardNaN class. additional_nan_rep will be passed to the StandardNanClass constructor.
     """
+    if not inplace: df = df.copy()
+    if std_nan: StandardNaN(inplace=True, additional_nan_rep=additional_nan_rep).fit_transform(df)
     null_freq = df.isna().sum() / len(df)
-    df = df.drop(columns=null_freq.loc[null_freq > threshold].index, inplace=inplace)
+    df.drop(columns=null_freq.loc[null_freq > threshold].index, inplace=True)
     return df
 
     

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-class TestFropNullCols:
+class TestDropNullCols:
     """Test drop_null_cols"""
 
     @pytest.fixture
@@ -47,6 +47,38 @@ class TestFropNullCols:
         assert 'b' in cols
         assert 'c' in cols
         assert 'd' in cols
+    
+    def test_std_nan_true(self):
+        """Test NaN standartization"""
+        df = pd.DataFrame({
+            'a' : ['1','','NA','None'],
+            'b' : [111,np.nan,np.nan, None],
+            'c' : [11,22,np.nan, None],
+            'd' : [None,'nan','val', None],
+        })
+        ret = drop_null_cols(df, threshold=0.5, std_nan=True)
+        cols = ret.columns
+        assert 'a' not in cols
+        assert 'b' not in cols
+        assert 'c' in cols
+        assert 'd' not in cols
+
+    def test_std_nan_false(self):
+        """Test NaN standartization"""
+        df = pd.DataFrame({
+            'a' : ['1','','NA','None'],
+            'b' : [111,np.nan,np.nan, None],
+            'c' : [11,22,np.nan, None],
+            'd' : [None,'nan','val', None],
+        })
+        ret = drop_null_cols(df, threshold=0.5, std_nan=False)
+        cols = ret.columns
+        assert 'a' in cols
+        assert 'b' not in cols
+        assert 'c' in cols
+        assert 'd' in cols
+
+
 
 class TestBooleanEncode:
     """Test BooleanEncode class"""
