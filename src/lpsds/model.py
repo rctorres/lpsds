@@ -41,7 +41,7 @@ def create_validation_dataset(model, X, y, proba: bool=True, copy: bool=True):
         - X: the input dataset
         - y: the targets of X
         - proba: if True, will call model.predict_proba. Otherwise, model.predict
-        - copy: whether to return a copy of the passed dataset.
+        - copy: whether to return a copy of the passed dataset (both X and y).
     
     Returns:
         A new dataset containing 2 new columns:
