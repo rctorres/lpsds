@@ -49,7 +49,7 @@ def create_validation_dataset(model, X, y, proba: bool=True, copy: bool=True):
             - y_pred: the model output for each sample in X.
     """
 
-    if copy: df = X.copy()
-    df['y_true'] = y
-    df['y_pred'] = model.predict_proba(X) if proba else model.predict(X)
-    return df
+    if copy: X = X.copy()
+    X['y_true'] = y
+    X['y_pred'] = model.predict_proba(X) if proba else model.predict(X)
+    return X
