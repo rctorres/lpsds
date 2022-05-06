@@ -13,8 +13,8 @@ import os
 #class Logger(metaclass=Singleton):
 class Logger():
     def __init__(self):
-        level = os.environ.get('LOG_LEVEL', 'DEBUG')
-        svc_name = os.environ.get('LOG_SVC_NAME', 'job')
+        level = os.environ.get('LPSDS_LOG_LEVEL', 'DEBUG')
+        svc_name = os.environ.get('LPSDS_LOG_SVC_NAME', 'job')
         logLevel = getattr(logging, level)
 #        warnings.filterwarnings('default')
 #        logging.captureWarnings(True)
