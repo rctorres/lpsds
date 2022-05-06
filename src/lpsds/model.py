@@ -53,3 +53,17 @@ def create_validation_dataset(model, X, y, proba: bool=True, copy: bool=True):
     X['y_true'] = y
     X['y_pred'] = model.predict_proba(X) if proba else model.predict(X)
     return X
+
+
+def get_input_variables_description(X):
+    """
+    Create a descriptive pandas telling the following info from X:
+      - The order of each column (Inpout Order)
+      - Column names (Input Name)
+      - Column types (Input Type)
+    """
+    input_description = X.dtypes.to_frame().reset_index()
+    input_description.index.name = 'Input Order'
+    input_description.columns = ['Input Name', 'Input Type']
+    return input_description
+
