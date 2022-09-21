@@ -3,6 +3,7 @@
 import numpy as np
 from scipy.stats import gmean
 from seaborn.algorithms import bootstrap
+from sklearn.metrics import recall_score
 
 def bootstrap_estimate(vec, ci=95, n_boot=1000, seed=None):
     """
@@ -51,3 +52,19 @@ def sp_index(tp: np.array, tn: np.array) -> np.array:
   if type(tn) is np.ndarray: tn = tn.flatten()
   mat = np.array([tp, tn])
   return np.sqrt( gmean(mat, axis=0) * mat.mean(axis=0) ).flatten()
+
+
+def sensibility(y_true, y_pred):
+  """
+  """
+  return recall_score(y_true, y_pred, pos_label=1)
+
+def specificity(y_true, y_pred):
+  """
+  """
+  return recall_score(y_true, y_pred, pos_label=0)
+
+def sp_score(y_true, y_pred):
+  """
+  """
+  return sp_index(sensibility(y_true, y_pred), specificity(y_true, y_pred))
