@@ -89,14 +89,14 @@ class TestBooleanEncode:
         return {
             'pos' : +1,
             'neg' : -1,
-            None : 0,
+            'None' : 0,
         }
     
     @pytest.fixture
     def df(self):
         """Test dataset"""
         return pd.DataFrame({
-            'a' : ['pos', 'neg', None],
+            'a' : ['pos', 'neg', 'None'],
             'b' : ['pos', 'pos', 'neg']
         })
 
@@ -160,7 +160,7 @@ class TestBooleanEncode:
         obj.fit_transform(df)
         assert df.a.iloc[0] == 'pos'
         assert df.a.iloc[1] == 'neg'
-        assert df.a.iloc[2] is None
+        assert df.a.iloc[2] == 'None'
 
         assert df.b.iloc[0] == 'pos'
         assert df.b.iloc[1] == 'pos'
