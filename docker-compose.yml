@@ -5,8 +5,6 @@
             build: .
             entrypoint: tail -f /dev/null
             volumes:
-                #All shared data must go here
-                - ${VALIDATION_BUCKET?err}:/bucket
                 #This will map your dev environment into the container so you
                 #won't need to rebuild the container at each code change. It will map
                 #the entire project so if you use VS Code yu will be able to attach to
@@ -15,28 +13,7 @@
                 #This is so the image can have the same git rights as the host.
                 #Otherwise MLFLOW won't be able to track commits.
                 - ${HOST_SSH_KEYS_DIR?err}:/root/.ssh
-                #This will map the host docker socket into the image
-                #as a result, we will be able to run docker images
-                #from within the image.
-                - ${DOCKER_SOCKET?err}:/var/run/docker.sock
             environment:
-                PYTHONPATH: '/work/scripts'
-                MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI?err}
-                MLFLOW_MODEL: ${MLFLOW_MODEL?err}
-                #When considering bind mounts, images running within this
-                #image share the same host as the validation image
-                #as a result, bind mount must have a host existing path
-                VALIDATION_BUCKET: ${VALIDATION_BUCKET?err}
-                DOROTYSDK_ACCESS_TOKEN: ${DOROTYSDK_ACCESS_TOKEN?err}
-
-
-    #All validation services are placed within the same virtual network
-    #If, by any chance the tb-brics network is not created, just run
-    #the command bellow from the terminal
-    #docker network create tb-brics
-    #Remember to define the network as "external" in each docker-compose
-    #file
-    networks: 
-        default: 
-            external: 
-                name: tb-brics 
+                PYTHONPATH: ${PYTHONPATH?err}
+                LPSDS_BUCKET: ${LPSDS_BUCKET?err}
+                LPSDS_HANDLER: ${LPSDS_HANDLER?err}
