@@ -3,7 +3,7 @@
 import pytest
 import math
 import numpy as np
-from metrics import sp_index
+from metrics import sp_index, sensitivity, specificity, sp_score
 
 class TestSPIndex:
     """TEsts sp_index function"""
@@ -37,3 +37,24 @@ class TestSPIndex:
         ret = sp_index(vec1, vec2)
         for v1, v2, r in zip(vec1.flatten(), vec2.flatten(), ret):
             assert r == self.sp_func(v1,v2)
+
+
+
+class TestSKLearnMetrics:
+    """Tests sensitivity"""
+
+    @pytest.fixture
+    def y_true(self):
+        return np.array([1,1,1,1,1,0,0,0,0,0])
+
+    @pytest.fixture
+    def y_pred(self):
+        return np.array([0,0,1,1,1,0,0,1,1,1])
+
+    @pytest.mark.parametrize(("metric_func", "target_val"), [
+        (sensitivity, 0.6),
+        (specificity, 0.4),
+        (sp_score, 0.4949232),
+    ])
+    def test_array(self, y_true, y_pred, metric_func, target_val):
+        assert metric_func(y_true, y_pred) == pytest.approx(target_val, 0.0000001)
