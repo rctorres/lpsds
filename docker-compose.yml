@@ -14,6 +14,6 @@
                 #Otherwise MLFLOW won't be able to track commits.
                 - ${HOST_SSH_KEYS_DIR?err}:/root/.ssh
             environment:
-                PYTHONPATH: ${PYTHONPATH?err}
+                PYTHONPATH: ${PYTHON_PATH?err}
                 LPSDS_BUCKET: ${LPSDS_BUCKET?err}
                 LPSDS_HANDLER: ${LPSDS_HANDLER?err}
