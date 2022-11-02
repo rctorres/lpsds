@@ -66,6 +66,18 @@ class TestLogStatistics:
         assert ret['auc']['auc_mean'] == 19.2
         assert ret['auc']['auc_err_min'] == 17.2
         assert ret['auc']['auc_err_max'] == 69.2
+    
+    @staticmethod
+    def assert_metrics_logged(metric_map):
+        assert metric_map['sp_mean'] == 3
+        assert metric_map['sp_err_min'] == 2
+        assert metric_map['sp_err_max'] == 8
+
+    def test_mlflow_submission(self, monkeypatch):
+        met_map = {'test_sp' : np.array([1,2,3,4,5])} #mean = 3, err_min=2, err_max=8
+        monkeypatch.setattr(mlflow, 'log_metrics', TestLogStatistics.assert_metrics_logged)
+        log_statistics(met_map)
+
 
 
 class TestLogDataFrame():
