@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="lpsds",
-    version="0.7.0",
+    version="0.8.0",
     author="Rodrigo Coura Torres",
     author_email="torres.rc@gmail.com",
     description="Helper functions for data science projects.",
