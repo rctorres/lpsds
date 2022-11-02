@@ -1,8 +1,7 @@
 import pytest
-
-from preprocessing import StandardNaN, BooleanEncode, SmartFloatCasting, drop_null_cols
 import pandas as pd
 import numpy as np
+from lpsds.preprocessing import StandardNaN, BooleanEncode, SmartFloatCasting, drop_null_cols
 
 
 class TestDropNullCols:

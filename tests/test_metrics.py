@@ -3,7 +3,7 @@
 import pytest
 import math
 import numpy as np
-from metrics import sp_index, sensitivity, specificity, sp_score
+from lpsds.metrics import sp_index, sensitivity, specificity, sp_score
 
 class TestSPIndex:
     """TEsts sp_index function"""

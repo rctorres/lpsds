@@ -1,6 +1,6 @@
-import pytest
-import handlers
 import os
+import pytest
+import lpsds.handlers
 
 def fake_make_dir(path):
     return path
@@ -16,7 +16,7 @@ class TestGetFullPath():
     
     @pytest.fixture
     def fh_obj(self, bucket):
-        return handlers.LocalFileHandler(bucket=bucket)
+        return lpsds.handlers.LocalFileHandler(bucket=bucket)
 
     def test_full_parameters_setting(self, bucket, fh_obj):
         dir_name = 'directory'

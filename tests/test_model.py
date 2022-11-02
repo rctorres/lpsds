@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from model import get_operation_model, create_validation_dataset
+from lpsds.model import get_operation_model, create_validation_dataset
 
 
 class DummyModel:

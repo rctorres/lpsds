@@ -2,7 +2,7 @@
 
 import pytest
 import pandas as pd
-from utils import keep, ObjectView, to_list, smart_tuple
+from lpsds.utils import keep, ObjectView, to_list, smart_tuple
 
         
 class TestKeep():
