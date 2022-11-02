@@ -95,3 +95,25 @@ class TestGetOperationModel:
     def test_best_model(self, cv_model, cv_splits, X, y_true, metric, less_is_better, target):
         _, _, _, model = get_operation_model(cv_model, cv_splits, X, y_true, metric, less_is_better)
         assert model == target
+
+
+    def test_numpy_data_x(self, cv_model, cv_splits, X, y_true):
+        _, best_x, _, _ = get_operation_model(cv_model, cv_splits, X.to_numpy(), y_true, 'test_accuracy')
+        assert best_x.shape[0] == 2
+        assert best_x.shape[1] == 2
+        assert best_x[0,0] == 12
+        assert best_x[0,1] == 22
+        assert best_x[1,0] == 13
+        assert best_x[1,1] == 23
+
+
+    @pytest.mark.parametrize(("y"), [
+                                        (pd.Series([30,31,32,33,34,35,36,37,38,39]).to_numpy()),
+                                        (np.array([30,31,32,33,34,35,36,37,38,39])),
+                                        (np.array([30,31,32,33,34,35,36,37,38,39]).reshape(-1,1)),
+                                    ])
+    def test_numpy_data_y(self, cv_model, cv_splits, X, y):
+        _, _, best_y, _ = get_operation_model(cv_model, cv_splits, X, y, 'test_accuracy')
+        assert best_y.shape[0] == 2
+        assert best_y[0] == 32
+        assert best_y[1] == 33
