@@ -33,7 +33,7 @@ class TestLogStatistics:
         return {
             'test_sp' : np.array([1,2,3,4,5]), #mean = 3, err_min=2, err_max=8
             'estimators' : np.array([1,2,3,4,5]),
-            'test_auc' : np.array([10,20,30,40,50]), #mean=19.2, err_min=9.2, err_max=69.2
+            'test_auc' : np.array([10,2,30,4,50]), #mean=19.2, err_min=17.2, err_max=69.2
         }
 
     def test_only_2_returned(self, cv_map):
@@ -62,5 +62,5 @@ class TestLogStatistics:
         assert ret['sp']['sp_err_max'] == 8
 
         assert ret['auc']['auc_mean'] == 19.2
-        assert ret['auc']['auc_err_min'] == 9.2
+        assert ret['auc']['auc_err_min'] == 17.2
         assert ret['auc']['auc_err_max'] == 69.2

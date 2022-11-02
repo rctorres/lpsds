@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import tempfile
 import mlflow
-from .metrics import bootstrap_estimate
+import lpsds.metrics
 
 def log_dataframe(df: pd.DataFrame, var_name: str, folder: str=''):
     """"
@@ -45,7 +45,7 @@ def log_statistics(cv_model: dict) -> dict:
     for metric, values in cv_model.items():
         grp = regexp.match(metric)
         if grp is not None:
-            mean, err_min, err_max = bootstrap_estimate(values)
+            mean, err_min, err_max = lpsds.metrics.bootstrap_estimate(values)
             metric_name = grp.group(1)
             ret_map[metric_name] = {
                 f'{metric_name}_err_min' : err_min,
