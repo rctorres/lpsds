@@ -141,6 +141,30 @@ class TestBooleanEncode:
         assert ret.b.iloc[2] == -1
 
 
+    def test_normal_operation_boolean(self):
+        """Test normal operation"""
+        test_map = {
+            True : +1,
+            False : -1,
+            np.nan : 0,
+        }
+
+        df = pd.DataFrame({
+            'a' : [True, False, np.nan],
+            'b' : [True, True, False]
+        })
+
+        obj = BooleanEncode(test_map)
+        ret = obj.fit_transform(df)
+        assert ret.a.iloc[0] == +1
+        assert ret.a.iloc[1] == -1
+        assert ret.a.iloc[2] == 0
+
+        assert ret.b.iloc[0] == +1
+        assert ret.b.iloc[1] == +1
+        assert ret.b.iloc[2] == -1
+
+
     def test_inplace_true(self, bool_map, df):
         """Test inplace True"""
         obj = BooleanEncode(bool_map, inplace=True)
