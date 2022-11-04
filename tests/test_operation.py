@@ -1,11 +1,10 @@
 import pytest
 import numpy as np
 import pandas as pd
-from lpsds.operation import get_operation_model
+from lpsds.operation import get_operation_model, get_fold_data
 
 
-class TestGetOperationModel:
-
+class FoldDataBase:
     @pytest.fixture
     def cv_model(self):
         return dict(
@@ -53,7 +52,52 @@ class TestGetOperationModel:
             38,
             39,
         ])
-    
+
+
+class TestGetFoldData(FoldDataBase):
+
+    def test_x_tst(self, cv_model, cv_splits, X, y_true):
+        _, x_tst, _, _, _ = get_fold_data(cv_model, cv_splits, X, y_true, 1)
+        assert x_tst.shape[0] == 2
+        assert x_tst.shape[1] == 2
+        assert x_tst.x1.iloc[0] == 12
+        assert x_tst.x2.iloc[0] == 22
+        assert x_tst.x1.iloc[1] == 13
+        assert x_tst.x2.iloc[1] == 23
+
+
+    def test_y_tst(self, cv_model, cv_splits, X, y_true):
+        _, _, _, y_tst, _ = get_fold_data(cv_model, cv_splits, X, y_true, 1)
+        assert y_tst.shape[0] == 2
+        assert y_tst.iloc[0] == 32
+        assert y_tst.iloc[1] == 33
+
+
+    def test_model(self, cv_model, cv_splits, X, y_true):
+        _, _, _, _, model = get_fold_data(cv_model, cv_splits, X, y_true, 1)
+        assert model == 'model_41'
+
+
+    def test_numpy_data_x_test(self, cv_model, cv_splits, X, y_true):
+        _, x_tst, _, _, _ = get_fold_data(cv_model, cv_splits, X.to_numpy(), y_true.to_numpy(), 2)
+        assert x_tst.shape[0] == 2
+        assert x_tst.shape[1] == 2
+        assert x_tst[0,0] == 14
+        assert x_tst[0,1] == 24
+        assert x_tst[1,0] == 15
+        assert x_tst[1,1] == 25
+
+
+    def test_numpy_data_y_test(self, cv_model, cv_splits, X, y_true):
+        _, _, _, y_tst, _ = get_fold_data(cv_model, cv_splits, X.to_numpy(), y_true.to_numpy(), 2)
+        assert y_tst.shape[0] == 2
+        assert y_tst[0] == 34
+        assert y_tst[1] == 35
+
+
+
+class TestGetOperationModel(FoldDataBase):
+
     @pytest.mark.parametrize(("metric", "less_is_better", 'target'), [ 
                                                     ('test_accuracy', False, 1),
                                                     ('test_mse', True, 3),
