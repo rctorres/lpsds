@@ -78,9 +78,6 @@ def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, 
     return best_fold, X_tst, y_tst, model
 
 
-import pandas as pd
-
-
 def get_staged_metrics(cv, cv_splits, X, y_true, metrics_map, **kwargs):
     aux_df_list = []
     num_folds = len(cv_splits)
@@ -90,7 +87,7 @@ def get_staged_metrics(cv, cv_splits, X, y_true, metrics_map, **kwargs):
 
         #Pipelines do not implemet staged_predict. As a result, we need
         #to apply the pre-processing manually. Probably there is a better way to do this...
-        for name, pp in model.steps[:-1]:
+        for _, pp in model.steps[:-1]:
             if hasattr(pp, 'transform'):
                 in_tst = pp.transform(in_tst)
 
