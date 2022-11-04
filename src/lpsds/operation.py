@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
+from typing import Union
 
 
-def get_operation_model(cv_model: dict, cv_splits: list, X: pd.DataFrame, y_true: pd.Series, metric:str='test_sp', less_is_better:bool=False) -> tuple:
+def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metric:str='test_sp', less_is_better:bool=False) -> tuple:
     """"
-    get_operation_model(cv_model: dict, cv_splits: list, X: pd.DataFrame, y_true: pd.Series, metric:str='test_sp', less_is_better:bool=False) -> tuple
+    get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metric:str='test_sp', less_is_better:bool=False) -> tuple
 
     Returns the operation model and its corresponding data. For that, it finds
     the model yielding the best metric over its corresponding testing set.
