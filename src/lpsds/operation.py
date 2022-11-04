@@ -74,8 +74,5 @@ def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, 
       - model: the operation model yielded by best_fold
     """
     best_fold = cv_model[metric].argmin() if less_is_better else cv_model[metric].argmax()
-    _, tst_idx = cv_splits[best_fold]
-    X = X.iloc[tst_idx] if hasattr(X, 'iloc') else X[tst_idx,]
-    y_true = y_true.iloc[tst_idx] if hasattr(y_true, 'iloc') else y_true[tst_idx,]
-    model = cv_model['estimator'][best_fold]
-    return best_fold, X, y_true, model
+    _, X_tst, _, y_tst, model = get_fold_data(cv_model, cv_splits, X, y_true, best_fold)
+    return best_fold, X_tst, y_tst, model
