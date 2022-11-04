@@ -3,6 +3,51 @@ import pandas as pd
 from typing import Union
 
 
+def get_fold_data(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], fold_idx: int) -> tuple:
+     """"
+     def get_fold_data(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], fold_idx: int) -> tuple
+
+     Returns the data corresponding to a given cross validation fold.
+
+     Input parameters:
+       - cv_model: a dictionary with structure equivalent to the one returned by sklearn.model_selection.cross_validate.
+       - cv_splits: a list where each item is a tuple containing the indexes to be used for training and testing in
+                    see sklearn.model_selection.KFold, for isntance, for details.
+       - X: a DataFrame containing **ALL** input samples used for model development and testing. It should be the same X as
+            the one passed to sklearn.model_selection.cross_validate.
+       - y_true: a Series containing **ALL** target samples used for model development and testing. It should be the same y_true as
+            the one passed to sklearn.model_selection.cross_validate.
+       - fold_idx: the index of the cv fold you want to collect the data.
+    
+     Returns:
+       - X_train: the input set used for training in the desired fold.
+       - X_test: the input set used for testing in the desired fold.
+       - y_train: the target set used for training in the desired fold.
+       - y_test: the target set used for testing in the desired fold.
+       - model: the operation model yielded by the desired fold.
+     """
+     trn_idx, tst_idx = cv_splits[fold_idx]
+
+     if hasattr(X, 'iloc'):
+          X_train = X.iloc[trn_idx]
+          X_test = X.iloc[tst_idx]
+     else:
+          X_train = X[trn_idx,]
+          X_test = X[tst_idx,]
+
+     if hasattr(y_true, 'iloc'):
+          y_train = y_true.iloc[trn_idx]
+          y_test = y_true.iloc[tst_idx]
+     else:
+          y_train = y_true[trn_idx,]
+          y_test = y_true[tst_idx,]
+    
+     model = cv_model['estimator'][fold_idx]
+    
+     return X_train, X_test, y_train, y_test, model
+
+
+
 def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metric:str='test_sp', less_is_better:bool=False) -> tuple:
     """"
     get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metric:str='test_sp', less_is_better:bool=False) -> tuple
