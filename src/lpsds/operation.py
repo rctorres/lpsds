@@ -78,7 +78,7 @@ def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, 
     return best_fold, X_tst, y_tst, model
 
 
-def get_staged_metrics(cv, cv_splits, X, y_true, metrics_map, **kwargs):
+def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, **kwargs) -> pd.DataFrame:
     aux_df_list = []
     num_folds = len(cv_splits)
     for fold in range(num_folds):
