@@ -57,13 +57,25 @@ class FoldDataBase:
 class TestGetFoldData(FoldDataBase):
 
     def test_x_trn(self, cv_model, cv_splits, X, y_true):
-        _, x_tst, _, _, _ = get_fold_data(cv_model, cv_splits, X, y_true, 1)
-        assert x_tst.shape[0] == 2
-        assert x_tst.shape[1] == 2
-        assert x_tst.x1.iloc[0] == 12
-        assert x_tst.x2.iloc[0] == 22
-        assert x_tst.x1.iloc[1] == 13
-        assert x_tst.x2.iloc[1] == 23
+        x_trn, _, _, _, _ = get_fold_data(cv_model, cv_splits, X, y_true, 1)
+        assert x_trn.shape[0] == 8
+        assert x_trn.shape[1] == 2
+        assert x_trn.x1.iloc[0] == 10
+        assert x_trn.x2.iloc[0] == 20
+        assert x_trn.x1.iloc[1] == 11
+        assert x_trn.x2.iloc[1] == 21
+        assert x_trn.x1.iloc[2] == 14
+        assert x_trn.x2.iloc[2] == 24
+        assert x_trn.x1.iloc[3] == 15
+        assert x_trn.x2.iloc[3] == 25
+        assert x_trn.x1.iloc[4] == 16
+        assert x_trn.x2.iloc[4] == 26
+        assert x_trn.x1.iloc[5] == 17
+        assert x_trn.x2.iloc[5] == 27
+        assert x_trn.x1.iloc[6] == 18
+        assert x_trn.x2.iloc[6] == 28
+        assert x_trn.x1.iloc[7] == 19
+        assert x_trn.x2.iloc[7] == 29
 
 
     def test_x_tst(self, cv_model, cv_splits, X, y_true):
@@ -77,10 +89,16 @@ class TestGetFoldData(FoldDataBase):
 
 
     def test_y_trn(self, cv_model, cv_splits, X, y_true):
-        _, _, _, y_tst, _ = get_fold_data(cv_model, cv_splits, X, y_true, 1)
-        assert y_tst.shape[0] == 2
-        assert y_tst.iloc[0] == 32
-        assert y_tst.iloc[1] == 33
+        _, _, y_trn, _, _ = get_fold_data(cv_model, cv_splits, X, y_true, 1)
+        assert y_trn.shape[0] == 8
+        assert y_trn.iloc[0] == 30
+        assert y_trn.iloc[1] == 31
+        assert y_trn.iloc[2] == 34
+        assert y_trn.iloc[3] == 35
+        assert y_trn.iloc[4] == 36
+        assert y_trn.iloc[5] == 37
+        assert y_trn.iloc[6] == 38
+        assert y_trn.iloc[7] == 39
 
 
     def test_y_tst(self, cv_model, cv_splits, X, y_true):
@@ -96,13 +114,25 @@ class TestGetFoldData(FoldDataBase):
 
 
     def test_numpy_data_x_trn(self, cv_model, cv_splits, X, y_true):
-        _, x_tst, _, _, _ = get_fold_data(cv_model, cv_splits, X.to_numpy(), y_true.to_numpy(), 2)
-        assert x_tst.shape[0] == 2
-        assert x_tst.shape[1] == 2
-        assert x_tst[0,0] == 14
-        assert x_tst[0,1] == 24
-        assert x_tst[1,0] == 15
-        assert x_tst[1,1] == 25
+        x_trn, _, _, _, _ = get_fold_data(cv_model, cv_splits, X.to_numpy(), y_true.to_numpy(), 2)
+        assert x_trn.shape[0] == 8
+        assert x_trn.shape[1] == 2
+        assert x_trn[0,0] == 10
+        assert x_trn[0,1] == 20
+        assert x_trn[1,0] == 11
+        assert x_trn[1,1] == 21
+        assert x_trn[2,0] == 12
+        assert x_trn[2,1] == 22
+        assert x_trn[3,0] == 13
+        assert x_trn[3,1] == 23
+        assert x_trn[4,0] == 16
+        assert x_trn[4,1] == 26
+        assert x_trn[5,0] == 17
+        assert x_trn[5,1] == 27
+        assert x_trn[6,0] == 18
+        assert x_trn[6,1] == 28
+        assert x_trn[7,0] == 19
+        assert x_trn[7,1] == 29
 
 
     def test_numpy_data_x_test(self, cv_model, cv_splits, X, y_true):
@@ -117,10 +147,16 @@ class TestGetFoldData(FoldDataBase):
 
 
     def test_numpy_data_y_trn(self, cv_model, cv_splits, X, y_true):
-        _, _, _, y_tst, _ = get_fold_data(cv_model, cv_splits, X.to_numpy(), y_true.to_numpy(), 2)
-        assert y_tst.shape[0] == 2
-        assert y_tst[0] == 34
-        assert y_tst[1] == 35
+        _, _, y_trn, _, _ = get_fold_data(cv_model, cv_splits, X.to_numpy(), y_true.to_numpy(), 2)
+        assert y_trn.shape[0] == 8
+        assert y_trn[0] == 30
+        assert y_trn[1] == 31
+        assert y_trn[2] == 32
+        assert y_trn[3] == 33
+        assert y_trn[4] == 36
+        assert y_trn[5] == 37
+        assert y_trn[6] == 38
+        assert y_trn[7] == 39
 
 
     def test_numpy_data_y_test(self, cv_model, cv_splits, X, y_true):
