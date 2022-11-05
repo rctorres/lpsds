@@ -239,26 +239,23 @@ class TestGetOperationModel(FoldDataBase):
 class TestGetStagedMetrics:
 
     class FakePredictor:
-        def __init__(self, gain):
-            self.gain = gain
-
         def staged_predict(self, X):
-            ret = self.gain * np.array([[10, 10], [11, 11], [12, 12]])
-            for r in ret:
-                yield r
+            X = X.copy()
+            for g, r in enumerate(X.iterrows()):
+                yield (g+1) * r[1].to_numpy()
     
     class FakePreProcessing:
         def __init__(self, offset):
             self.offset = offset
 
         def transform(self, X):
-            return X + self.offset
+            return X - self.offset*np.ones([2,2])
 
-    def pipeline(self, gain, offset):
+    def pipeline(self, offset):
         pipe = ObjectView()
         pipe.steps = [
             ('pre_proc', TestGetStagedMetrics.FakePreProcessing(offset)),
-            ('estimator', TestGetStagedMetrics.FakePredictor(gain))
+            ('estimator', TestGetStagedMetrics.FakePredictor())
         ]
         return pipe
 
@@ -289,7 +286,7 @@ class TestGetStagedMetrics:
 
     @pytest.fixture
     def cv_model(self, cv_splits):
-        cv_mod = [self.pipeline(1,0) for i in range(len(cv_splits))]
+        cv_mod = [self.pipeline(0) for i in range(len(cv_splits))]
         return dict(estimator=cv_mod)
     
     def metric_1(self, targ, out):
@@ -333,3 +330,77 @@ class TestGetStagedMetrics:
         assert df.iloc[5].Fold == 1
     
 
+    def test_multiple_metric(self, cv_model, cv_splits, X, y_true):
+        metric_map = {'Metric_1' : self.metric_1, 'Metric_2' : self.metric_2}
+        df = get_staged_metrics(cv_model, cv_splits, X, y_true, metric_map)
+
+        assert df.iloc[0].Metric == 'Metric_1'
+        assert df.iloc[0].Value == 41
+        assert df.iloc[0].Stage == 0
+        assert df.iloc[0].Fold == 0
+
+        assert df.iloc[1].Metric == 'Metric_2'
+        assert df.iloc[1].Value == 81
+        assert df.iloc[1].Stage == 0
+        assert df.iloc[1].Fold == 0
+
+        assert df.iloc[2].Metric == 'Metric_1'
+        assert df.iloc[2].Value == 39
+        assert df.iloc[2].Stage == 1
+        assert df.iloc[2].Fold == 0
+
+        assert df.iloc[3].Metric == 'Metric_2'
+        assert df.iloc[3].Value == 83
+        assert df.iloc[3].Stage == 1
+        assert df.iloc[3].Fold == 0
+
+        assert df.iloc[4].Metric == 'Metric_1'
+        assert df.iloc[4].Value == 37
+        assert df.iloc[4].Stage == 2
+        assert df.iloc[4].Fold == 0
+
+        assert df.iloc[5].Metric == 'Metric_2'
+        assert df.iloc[5].Value == 85
+        assert df.iloc[5].Stage == 2
+        assert df.iloc[5].Fold == 0
+
+        assert df.iloc[6].Metric == 'Metric_1'
+        assert df.iloc[6].Value == 45
+        assert df.iloc[6].Stage == 0
+        assert df.iloc[6].Fold == 1
+
+        assert df.iloc[7].Metric == 'Metric_2'
+        assert df.iloc[7].Value == 85
+        assert df.iloc[7].Stage == 0
+        assert df.iloc[7].Fold == 1
+
+        assert df.iloc[8].Metric == 'Metric_1'
+        assert df.iloc[8].Value == 43
+        assert df.iloc[8].Stage == 1
+        assert df.iloc[8].Fold == 1
+
+        assert df.iloc[9].Metric == 'Metric_2'
+        assert df.iloc[9].Value == 87
+        assert df.iloc[9].Stage == 1
+        assert df.iloc[9].Fold == 1
+
+        assert df.iloc[10].Metric == 'Metric_1'
+        assert df.iloc[10].Value == 41
+        assert df.iloc[10].Stage == 2
+        assert df.iloc[10].Fold == 1
+    
+        assert df.iloc[11].Metric == 'Metric_2'
+        assert df.iloc[11].Value == 89
+        assert df.iloc[11].Stage == 2
+        assert df.iloc[11].Fold == 1
+
+
+    def test_pre_processing(self, cv_splits, X, y_true):
+        metric_map = {'Metric_1' : self.metric_1}
+        cv_model = dict(estimator=[self.pipeline(10) for i in range(len(cv_splits))])
+
+        df = get_staged_metrics(cv_model, cv_splits, X, y_true, metric_map)
+        assert df.iloc[0].Value == 51
+        assert df.iloc[1].Value == 37
+        assert df.iloc[2].Value == 51
+        assert df.iloc[3].Value == 33
