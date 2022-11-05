@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
 import pandas as pd
-from lpsds.operation import get_operation_model, get_fold_data
+from lpsds.utils import ObjectView
+from lpsds.operation import get_operation_model, get_fold_data, get_staged_metrics
 
 
 class FoldDataBase:
@@ -232,3 +233,103 @@ class TestGetOperationModel(FoldDataBase):
         assert best_y.shape[0] == 2
         assert best_y[0] == 32
         assert best_y[1] == 33
+
+
+
+class TestGetStagedMetrics:
+
+    class FakePredictor:
+        def __init__(self, gain):
+            self.gain = gain
+
+        def staged_predict(self, X):
+            ret = self.gain * np.array([[10, 10], [11, 11], [12, 12]])
+            for r in ret:
+                yield r
+    
+    class FakePreProcessing:
+        def __init__(self, offset):
+            self.offset = offset
+
+        def transform(self, X):
+            return X + self.offset
+
+    def pipeline(self, gain, offset):
+        pipe = ObjectView()
+        pipe.steps = [
+            ('pre_proc', TestGetStagedMetrics.FakePreProcessing(offset)),
+            ('estimator', TestGetStagedMetrics.FakePredictor(gain))
+        ]
+        return pipe
+
+    @pytest.fixture
+    def cv_splits(self):
+        return [
+            ([2,3], [0,1]), #fold 0
+            ([0,1], [2,3]), #fold 1
+        ]
+    
+    @pytest.fixture
+    def X(self):
+        ret = pd.DataFrame(columns=['x1', 'x2'])
+        ret.loc[len(ret)] = 10,20
+        ret.loc[len(ret)] = 11,21
+        ret.loc[len(ret)] = 12,22
+        ret.loc[len(ret)] = 13,23
+        return ret
+    
+    @pytest.fixture
+    def y_true(self):
+        return pd.Series([
+            30,
+            31,
+            32,
+            33,
+        ])
+
+    @pytest.fixture
+    def cv_model(self, cv_splits):
+        cv_mod = [self.pipeline(1,0) for i in range(len(cv_splits))]
+        return dict(estimator=cv_mod)
+    
+    def metric_1(self, targ, out):
+        return targ.sum() - out.sum()
+
+    def metric_2(self, targ, out):
+        return targ.sum() + out.sum()
+
+    def test_single_metric(self, cv_model, cv_splits, X, y_true):
+        metric_map = {'Metric_1' : self.metric_1}
+        df = get_staged_metrics(cv_model, cv_splits, X, y_true, metric_map)
+
+        assert df.iloc[0].Metric == 'Metric_1'
+        assert df.iloc[0].Value == 41
+        assert df.iloc[0].Stage == 0
+        assert df.iloc[0].Fold == 0
+    
+        assert df.iloc[1].Metric == 'Metric_1'
+        assert df.iloc[1].Value == 39
+        assert df.iloc[1].Stage == 1
+        assert df.iloc[1].Fold == 0
+
+        assert df.iloc[2].Metric == 'Metric_1'
+        assert df.iloc[2].Value == 37
+        assert df.iloc[2].Stage == 2
+        assert df.iloc[2].Fold == 0
+
+        assert df.iloc[3].Metric == 'Metric_1'
+        assert df.iloc[3].Value == 45
+        assert df.iloc[3].Stage == 0
+        assert df.iloc[3].Fold == 1
+    
+        assert df.iloc[4].Metric == 'Metric_1'
+        assert df.iloc[4].Value == 43
+        assert df.iloc[4].Stage == 1
+        assert df.iloc[4].Fold == 1
+
+        assert df.iloc[5].Metric == 'Metric_1'
+        assert df.iloc[5].Value == 41
+        assert df.iloc[5].Stage == 2
+        assert df.iloc[5].Fold == 1
+    
+

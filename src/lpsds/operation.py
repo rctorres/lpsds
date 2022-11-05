@@ -79,34 +79,36 @@ def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, 
 
 
 def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, **kwargs) -> pd.DataFrame:
-    aux_df_list = []
-    num_folds = len(cv_splits)
-    for fold in range(num_folds):
-        #Getting the test data and model for the fold
-        _, in_tst, _, targ_tst, model = get_fold_data(cv, cv_splits, X, y_true, fold)
 
-        #Pipelines do not implemet staged_predict. As a result, we need
-        #to apply the pre-processing manually. Probably there is a better way to do this...
-        for _, pp in model.steps[:-1]:
-            if hasattr(pp, 'transform'):
-                in_tst = pp.transform(in_tst)
 
-        #Collecting just the final estimator (i.e. the model being applied right after all the pre-processing pipeline).
-        estimator = model.steps[-1][1]
+     aux_df_list = []
+     num_folds = len(cv_splits)
+     for fold in range(num_folds):
+         #Getting the test data and model for the fold
+         _, in_tst, _, targ_tst, model = get_fold_data(cv, cv_splits, X, y_true, fold)
 
-        #Calculating the accuracy for each class w.r.t the number of stages.
-        for stage, out_tst in enumerate(estimator.staged_predict(in_tst)):
-            for metric_name, metric_function in metrics_map.items():
-                metric_value = metric_function(targ_tst, out_tst, **kwargs)
-                #Saving the results in an auxiliary dataframe
-                aux_df = pd.DataFrame({
-                    'Metric' : [metric_name],
-                    'Value' : [metric_value],
-                    'Stage' : [stage],
-                    'Fold' : [fold],
-                })
-                aux_df_list.append(aux_df)
+         #Pipelines do not implemet staged_predict. As a result, we need
+         #to apply the pre-processing manually. Probably there is a better way to do this...
+         for _, pp in model.steps[:-1]:
+             if hasattr(pp, 'transform'):
+                 in_tst = pp.transform(in_tst)
 
-    #Creating the final dataframe in a format suitable for seaborn (long-format)
-    return pd.concat(aux_df_list)
+         #Collecting just the final estimator (i.e. the model being applied right after all the pre-processing pipeline).
+         estimator = model.steps[-1][1]
+
+         #Calculating the accuracy for each class w.r.t the number of stages.
+         for stage, out_tst in enumerate(estimator.staged_predict(in_tst)):
+             for metric_name, metric_function in metrics_map.items():
+                 metric_value = metric_function(targ_tst, out_tst, **kwargs)
+                 #Saving the results in an auxiliary dataframe
+                 aux_df = pd.DataFrame({
+                     'Metric' : [metric_name],
+                     'Value' : [metric_value],
+                     'Stage' : [stage],
+                     'Fold' : [fold],
+                 })
+                 aux_df_list.append(aux_df)
+
+     #Creating the final dataframe in a format suitable for seaborn (long-format)
+     return pd.concat(aux_df_list)
  
