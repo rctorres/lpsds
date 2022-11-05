@@ -53,5 +53,6 @@ def log_statistics(cv_model: dict) -> dict:
                 f'{metric_name}_err_max' : err_max
             }
             mlflow.log_metrics(ret_map[metric_name])
+            for i,v in enumerate(values): mlflow.log_metric(metric_name, v, step=i)
     
     return ret_map

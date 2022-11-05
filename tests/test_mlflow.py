@@ -77,6 +77,22 @@ class TestLogStatistics:
         met_map = {'test_sp' : np.array([1,2,3,4,5])} #mean = 3, err_min=2, err_max=8
         monkeypatch.setattr(mlflow, 'log_metrics', TestLogStatistics.assert_metrics_logged)
         log_statistics(met_map)
+    
+
+    def test_metrics_vector_logged(self, monkeypatch):
+        self.metric_list = []
+        def mocked_log_metric(key, value, step):
+            self.metric_list.append((key, value, step))
+
+
+        met_map = {'test_sp' : np.array([1,2,3,4,5])} #mean = 3, err_min=2, err_max=8
+        monkeypatch.setattr(mlflow, 'log_metric', mocked_log_metric)
+        log_statistics(met_map)
+        for i, items in enumerate(self.metric_list):
+            k,v,s = items
+            assert k == 'sp'
+            assert v == i+1
+            assert s == i
 
 
 
