@@ -21,11 +21,16 @@ class TestLogStatistics:
         Returns a mocked result for bootstrap_estimate
         """
         return vec.mean(), vec.mean()-vec.min(), vec.mean()+vec.max()
+    
+    @staticmethod
+    def mocked_log_metric(key, value, step):
+        return None
 
     @pytest.fixture(autouse=True)
     def set_patches(self, monkeypatch):
         monkeypatch.setattr(lpsds.metrics, 'bootstrap_estimate', TestLogStatistics.mocked_bootstrap_estimate)
         monkeypatch.setattr(mlflow, 'log_metrics', TestLogStatistics.mocked_log_metrics)
+        monkeypatch.setattr(mlflow, 'log_metric', TestLogStatistics.mocked_log_metric)
 
     @pytest.fixture
     def cv_map(self):
