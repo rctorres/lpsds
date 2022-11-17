@@ -39,7 +39,7 @@ class MLFlowBase:
         """
         ret = ObjectView()
         ret.info = ObjectView()
-        ret.info.run_id = '123'
+        ret.info.run_id = '112233'
         return ret
     
     @staticmethod
@@ -57,10 +57,28 @@ class MLFlowBase:
         return ret
 
     @pytest.fixture(autouse=True)
-    def set_mlflow_patches(self, monkeypatch):
+    def set_mlflow_patches(self, monkeypatch, request):
+        if 'noautofixt' in request.keywords: return
         monkeypatch.setattr(mlflow, 'active_run', MLFlowBase.mocked_active_run)
         monkeypatch.setattr(mlflow, 'get_run', MLFlowBase.mocked_get_run)
         monkeypatch.setattr(mlflow.tracking, 'MlflowClient', MLFlowBase.MockedRunClient)
+
+
+class TestInit(MLFlowBase):
+
+    def test_call_with_id(self):
+        a = MLFlow('12345')
+        assert a.run_id == '12345'
+
+    @pytest.mark.noautofixt
+    def test_call_without_id_without_experiment(self):
+        with pytest. raises(ValueError):
+            MLFlow()
+
+
+    def test_call_without_id(self):
+        a = MLFlow()
+        assert a.run_id == '112233'
 
 
 class TestLogStatistics(MLFlowBase):
@@ -197,7 +215,7 @@ class TestLogDataFrame(MLFlowBase):
 
 class TestGetRunID(MLFlowBase):
     def test_return(self, mlf_obj):
-        assert mlf_obj.get_run_id() == '123'
+        assert mlf_obj.get_run_id() == '112233'
 
 
 class TestGetMetrics(MLFlowBase):
@@ -218,3 +236,7 @@ class TestGetMetrics(MLFlowBase):
         met = mlf_obj.get_metrics()
         assert np.array_equal(met['sp'], np.array([1,2,3,4,5]))
         assert np.array_equal(met['f1'], np.array([10,20,30,40,50]))
+
+
+#    class TestGetDataFrame(MLFlowBase):
+
