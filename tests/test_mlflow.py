@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 import numpy as np
 import pandas as pd
 import pytest
@@ -27,6 +29,14 @@ class MLFlowBase:
                 'f1' : f1_list,
             }
             return ret_map[metric_name]
+        
+        def download_artifacts(self, run_id, full_path, temp_path):
+            df = pd.DataFrame({'a' : [1,2,3], 'b' : [11,22,33]})
+            fname = os.path.split(full_path)[1]
+            local_name = os.path.join(temp_path, fname)
+            df.to_parquet(local_name)
+            return local_name
+
 
     @pytest.fixture
     def mlf_obj(self):
@@ -238,5 +248,26 @@ class TestGetMetrics(MLFlowBase):
         assert np.array_equal(met['f1'], np.array([10,20,30,40,50]))
 
 
-#    class TestGetDataFrame(MLFlowBase):
+class TestGetDataFrame(MLFlowBase):
 
+    def test_operation_no_folder(self, mlf_obj):
+        df = mlf_obj.get_dataframe('my_df')
+        assert df.shape[0] == 3
+        assert df.shape[1] == 2
+        assert df.iloc[0].a == 1
+        assert df.iloc[0].b == 11
+        assert df.iloc[1].a == 2
+        assert df.iloc[1].b == 22
+        assert df.iloc[2].a == 3
+        assert df.iloc[2].b == 33
+
+    def test_operation_with_folder(self, mlf_obj):
+        df = mlf_obj.get_dataframe('my_df', 'folder/path')
+        assert df.shape[0] == 3
+        assert df.shape[1] == 2
+        assert df.iloc[0].a == 1
+        assert df.iloc[0].b == 11
+        assert df.iloc[1].a == 2
+        assert df.iloc[1].b == 22
+        assert df.iloc[2].a == 3
+        assert df.iloc[2].b == 33
