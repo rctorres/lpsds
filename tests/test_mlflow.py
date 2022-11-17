@@ -9,6 +9,25 @@ from lpsds.utils import ObjectView
 
 class MLFlowBase:
 
+    class MockedRunClient:
+        def get_metric_history(self, run_id, metric_name):
+
+            sp_list = []
+            f1_list = []
+            for i in range(5):
+                sp_obj = ObjectView()
+                sp_obj.value = i+1
+                f1_obj = ObjectView()
+                f1_obj.value = (i+1) * 10
+                sp_list.append(sp_obj)
+                f1_list.append(f1_obj)
+
+            ret_map = {
+                'sp' : sp_list,
+                'f1' : f1_list,
+            }
+            return ret_map[metric_name]
+
     @pytest.fixture
     def mlf_obj(self):
         return MLFlow()
@@ -20,7 +39,7 @@ class MLFlowBase:
         """
         ret = ObjectView()
         ret.info = ObjectView()
-        ret.info.run_id = 123
+        ret.info.run_id = '123'
         return ret
     
     @staticmethod
@@ -28,21 +47,20 @@ class MLFlowBase:
         """
         Mocks mlflow.active_run behavior
         """
-        return 'my_run'
-
-    @staticmethod
-    def mocked_MlflowClient():
-        """
-        Mocks mlflow.active_run behavior
-        """
-        return ObjectView
-
+        ret = ObjectView()
+        ret.data = ObjectView()
+        ret.data.metrics = dict(
+            sp_mean = 0.9,
+            f1_mean = 0.95,
+            acc = 0.99
+        )
+        return ret
 
     @pytest.fixture(autouse=True)
     def set_mlflow_patches(self, monkeypatch):
-        monkeypatch.setattr(mlflow, 'active_run', TestLogStatistics.mocked_active_run)
-        monkeypatch.setattr(mlflow, 'get_run', TestLogStatistics.mocked_get_run)
-        monkeypatch.setattr(mlflow.tracking, 'MlflowClient', TestLogStatistics.mocked_MlflowClient)
+        monkeypatch.setattr(mlflow, 'active_run', MLFlowBase.mocked_active_run)
+        monkeypatch.setattr(mlflow, 'get_run', MLFlowBase.mocked_get_run)
+        monkeypatch.setattr(mlflow.tracking, 'MlflowClient', MLFlowBase.MockedRunClient)
 
 
 class TestLogStatistics(MLFlowBase):
@@ -177,5 +195,26 @@ class TestLogDataFrame(MLFlowBase):
 
 
 
+class TestGetRunID(MLFlowBase):
+    def test_return(self, mlf_obj):
+        assert mlf_obj.get_run_id() == '123'
+
+
 class TestGetMetrics(MLFlowBase):
-    pass
+
+    def test_num_returns(self, mlf_obj):
+        met = mlf_obj.get_metrics()
+        assert len(met) == 5
+    
+
+    def test_scalars(self, mlf_obj):
+        met = mlf_obj.get_metrics()
+        assert met['sp_mean'] == 0.9
+        assert met['f1_mean'] == 0.95
+        assert met['acc'] == 0.99
+
+
+    def test_vectors(self, mlf_obj):
+        met = mlf_obj.get_metrics()
+        assert np.array_equal(met['sp'], np.array([1,2,3,4,5]))
+        assert np.array_equal(met['f1'], np.array([10,20,30,40,50]))
