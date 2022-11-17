@@ -73,7 +73,15 @@ class MLFlow:
           - best_fold_id
         """
         return self.run.data.params
-    
+
+    def get_run_id(self) -> str:
+        """
+        def get_run_id(self)
+
+        Returns the experiment´s run id.
+        """
+        return self.run_id
+
     def get_metrics(self):
         """
         Must return model metrics after training:
