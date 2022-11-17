@@ -8,6 +8,11 @@ from lpsds.mlflow import MLFlow
 from lpsds.utils import ObjectView
 
 class MLFlowBase:
+
+    @pytest.fixture
+    def mlf_obj(self):
+        return MLFlow()
+
     @staticmethod
     def mocked_active_run():
         """
@@ -76,10 +81,6 @@ class TestLogStatistics(MLFlowBase):
             'estimators' : np.array([1,2,3,4,5]),
             'test_auc' : np.array([10,2,30,4,50]), #mean=19.2, err_min=17.2, err_max=69.2
         }
-    
-    @pytest.fixture
-    def mlf_obj(self):
-        return MLFlow()
 
     def test_only_2_returned(self, cv_map, mlf_obj):
         """
@@ -165,10 +166,6 @@ class TestLogDataFrame(MLFlowBase):
     def df(self):
         return pd.DataFrame({'a' : [1,2,3], 'b' : [40,50,60]})
 
-    @pytest.fixture
-    def mlf_obj(self):
-        return MLFlow()
-
     def test_file_exists(self, monkeypatch, df, mlf_obj):
         monkeypatch.setattr(mlflow, 'log_artifact', TestLogDataFrame.assert_file_exists)        
         mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder')
@@ -177,3 +174,8 @@ class TestLogDataFrame(MLFlowBase):
     def test_file_correct(self, monkeypatch, df, mlf_obj):
         monkeypatch.setattr(mlflow, 'log_artifact', TestLogDataFrame.assert_right_content)
         mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder')
+
+
+
+class TestGetMetrics(MLFlowBase):
+    pass
