@@ -1,5 +1,6 @@
 import os
 import re
+import numpy as np
 import pandas as pd
 import tempfile
 import mlflow
@@ -56,3 +57,64 @@ def log_statistics(cv_model: dict) -> dict:
             for i,v in enumerate(values): mlflow.log_metric(metric_name, v, step=i)
     
     return ret_map
+
+
+
+
+
+
+class MLFlow:
+    def __init__(self, run_id=None):
+        self.run_id = mlflow.active_run().info.run_id if run_id is None else run_id
+        self.run = mlflow.get_run(self.run_id)
+        self.run_client = mlflow.tracking.MlflowClient()
+    
+    def get_params(self):
+        """
+        Must return model parameters, such as:
+          - database
+          - best_fold_id
+        """
+        return self.run.data.params
+    
+    def get_metrics(self):
+        """
+        Must return model metrics after training:
+          - F1 
+          - AUC
+          - Sensibility
+          - Specificity
+          - SP
+
+          Each metric has 4 values:
+           - {metric} a vector with the per fold metric values.
+           - {metric}_mean: the metric mean value
+           - {metric}_err_min: the metric lower error threshold (i.c. 95%)
+           - {metric}_err_max: the metric upper level threshold (i.c. 95%)
+        """
+        ret = self.run.data.metrics
+        #Metrics saved as vectors need to be collected fold by fold.
+        #To know which they are, we use the "_mean" anchor.
+        vector_metrics_list = [m.replace('_mean', '') for m in ret.keys() if m.endswith('_mean')]
+        for metric_name in vector_metrics_list:
+            ret[metric_name] = np.array([m.value for m in self.run_client.get_metric_history(self.run_id, metric_name)])
+        return ret
+
+
+    def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
+        """"
+        def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
+
+        Load a pandas dataframe saved to MLFlow as a .parquet file.
+
+        Input parameters:
+        - var_name: the name the dataframe have within MLFlow.
+        - folder: the path (in MLFlow) to where the dataframe will be loaded from.
+        
+        Return a pandas.DataFrame with the collected info.
+        """
+
+        with tempfile.TemporaryDirectory() as temp_path:
+            full_path = os.path.join(folder, var_name + '.parquet')
+            local_path = self.run_client.download_artifacts(self.run_id, full_path, temp_path)
+            return pd.read_parquet(local_path)
