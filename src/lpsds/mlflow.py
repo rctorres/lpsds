@@ -9,7 +9,12 @@ import lpsds.metrics
 
 class MLFlow:
     def __init__(self, run_id=None):
-        self.run_id = mlflow.active_run().info.run_id if run_id is None else run_id
+        active_run = mlflow.active_run()
+
+        if run_id is None and active_run is None:
+            raise ValueError('You must invoke this class either by passing a valid run id or within an started run (mlflow.start_run)')
+
+        self.run_id = active_run.info.run_id if run_id is None else run_id
         self.run = mlflow.get_run(self.run_id)
         self.run_client = mlflow.tracking.MlflowClient()
 
