@@ -139,7 +139,7 @@ class TestLogStatistics(MLFlowBase):
 
 
 
-class TestLogDataFrame():
+class TestLogDataFrame(MLFlowBase):
 
     @staticmethod
     def assert_file_exists(temp_file_name, folder):
