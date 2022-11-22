@@ -5,6 +5,7 @@ import pandas as pd
 import tempfile
 import mlflow
 import lpsds.metrics
+from lpsds.utils import ObjectView
 
 
 class MLFlow:
@@ -87,28 +88,37 @@ class MLFlow:
         """
         return self.run_id
 
-    def get_metrics(self):
-        """
-        Must return model metrics after training:
-          - F1 
-          - AUC
-          - Sensibility
-          - Specificity
-          - SP
 
-          Each metric has 4 values:
-           - {metric} a vector with the per fold metric values.
-           - {metric}_mean: the metric mean value
-           - {metric}_err_min: the metric lower error threshold (i.c. 95%)
-           - {metric}_err_max: the metric upper level threshold (i.c. 95%)
+    def get_metrics(self, as_dict=False):
         """
-        ret = self.run.data.metrics
-        #Metrics saved as vectors need to be collected fold by fold.
-        #To know which they are, we use the "_mean" anchor.
-        vector_metrics_list = [m.replace('_mean', '') for m in ret.keys() if m.endswith('_mean')]
-        for metric_name in vector_metrics_list:
-            ret[metric_name] = np.array([m.value for m in self.run_client.get_metric_history(self.run_id, metric_name)])
-        return ret
+        Collects all metrics available for a given run.
+        
+
+        Returns a pandas dataframe with all metrics.
+
+        if as_dict is True, the method will return the metrics as
+        a dict, where, If the metric is a vector, it is returned as a numpy.array.
+        """
+        
+        #Collecting all metrics in a dataframe
+        df = pd.DataFrame(columns=['metric', 'step', 'value'])
+        for metric_name in self.run.data.metrics.keys():
+            for m in self.run_client.get_metric_history(self.run_id, metric_name):
+                df.loc[len(df)] = metric_name, m.step, m.value
+        df.sort_values(['metric', 'step'], inplace=True, ignore_index=True)
+        
+        if not as_dict: return df
+    
+        ret = ObjectView()
+        #Creating a dataframe where vectorized metrics are saved as lists
+        grp = df.groupby('metric').value.agg(lambda x: x.iloc[0] if len(x) == 1 else x.to_list()).to_dict()
+        
+        #Lists are converted to np.arrays
+        for k,v in grp.items():
+            if hasattr(v, '__iter__'):
+                grp[k] = np.array(v)
+        return grp
+
 
 
     def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
