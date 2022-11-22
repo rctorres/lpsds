@@ -17,17 +17,22 @@ class MLFlowBase:
             sp_list = []
             f1_list = []
             for i in range(5):
-                sp_obj = ObjectView()
-                sp_obj.value = i+1
-                f1_obj = ObjectView()
-                f1_obj.value = (i+1) * 10
-                sp_list.append(sp_obj)
-                f1_list.append(f1_obj)
+                for j, v in enumerate([sp_list, f1_list]):
+                    w = 1 if j==0 else 10
+                    obj = ObjectView()
+                    obj.value = w * (i+1)
+                    obj.step = i+1
+                    v.append(obj)
 
-            ret_map = {
-                'sp' : sp_list,
-                'f1' : f1_list,
-            }
+            ret_map = {}
+            for m, v in zip(['sp_mean', 'f1_mean', 'acc'], [0.9, 0.95, 0.99]):
+                obj = ObjectView()
+                obj.value = v
+                obj.step = 0
+                ret_map[m] = [ obj ]
+
+            ret_map['sp'] = sp_list
+            ret_map['f1'] = f1_list
             return ret_map[metric_name]
         
         def download_artifacts(self, run_id, full_path, temp_path):
@@ -62,7 +67,9 @@ class MLFlowBase:
         ret.data.metrics = dict(
             sp_mean = 0.9,
             f1_mean = 0.95,
-            acc = 0.99
+            acc = 0.99,
+            sp = 0,
+            f1 = 10,
         )
         return ret
 
@@ -231,21 +238,46 @@ class TestGetRunID(MLFlowBase):
 class TestGetMetrics(MLFlowBase):
 
     def test_num_returns(self, mlf_obj):
-        met = mlf_obj.get_metrics()
-        assert len(met) == 5
-    
+        met = mlf_obj.get_metrics(as_dict=True)
+        assert len(met) == 5    
 
     def test_scalars(self, mlf_obj):
-        met = mlf_obj.get_metrics()
+        met = mlf_obj.get_metrics(as_dict=True)
         assert met['sp_mean'] == 0.9
         assert met['f1_mean'] == 0.95
         assert met['acc'] == 0.99
 
 
     def test_vectors(self, mlf_obj):
-        met = mlf_obj.get_metrics()
+        met = mlf_obj.get_metrics(as_dict=True)
         assert np.array_equal(met['sp'], np.array([1,2,3,4,5]))
         assert np.array_equal(met['f1'], np.array([10,20,30,40,50]))
+
+
+        
+    def test_dataframe_structure(self, mlf_obj):
+        met = mlf_obj.get_metrics()
+        assert met.shape[0] == 13
+        assert met.shape[1] == 3
+        assert met.columns[0] == 'metric'
+        assert met.columns[1] == 'step'
+        assert met.columns[2] == 'value'
+
+    
+
+    def test_scalars_dataframe(self, mlf_obj):
+        met = mlf_obj.get_metrics()
+        assert met.loc[met.metric == 'sp_mean', 'value'].iloc[0] == 0.9
+        assert met.loc[met.metric == 'f1_mean', 'value'].iloc[0] == 0.95
+        assert met.loc[met.metric == 'acc', 'value'].iloc[0] == 0.99
+
+
+    def test_vectors_dataframe(self, mlf_obj):
+        met = mlf_obj.get_metrics()
+        assert np.array_equal(met.loc[met.metric == 'sp', 'value'].to_numpy(), np.array([1,2,3,4,5]))
+        assert np.array_equal(met.loc[met.metric == 'f1', 'value'].to_numpy(), np.array([10,20,30,40,50]))
+
+
 
 
 class TestGetDataFrame(MLFlowBase):
