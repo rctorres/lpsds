@@ -79,7 +79,29 @@ def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, 
 
 
 def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, **kwargs) -> pd.DataFrame:
+     """
+     def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, **kwargs) -> pd.DataFrame:
 
+     Evaluates a set of metrics for each stage in an enseble model taking into consideration the cross-validation folds employed for the model development.
+
+     Input parameters:
+      - cv: a dictionary with structure equivalent to the one returned by sklearn.model_selection.cross_validate.
+      - cv_splits: a list where each item is a tuple containing the indexes to be used for training and testing in
+                   see sklearn.model_selection.KFold, for isntance, for details.
+      - X: a DataFrame containing **ALL** input samples used for model development and testing. It should be the same X as
+           the one passed to sklearn.model_selection.cross_validate.
+      - y_true: a Series containing **ALL** target samples used for model development and testing. It should be the same y_true as
+                the one passed to sklearn.model_selection.cross_validate.
+      - metrics_map: a map where key is a string label identifying the metric to be evaluated at each stage, and value is a reference
+                     to a function in the format metric_function(y_pred, y_true, **kwargs) -> float that will be responsible to evaluate
+                     the desired metric for each stage of the ensemble model for each cv-fold.
+
+     Returns: a pandas.DataFrame with the following columns:
+       - Metric: the metric name (given by the keys in metrics_map)
+       - Fold: the cv-fold ID where the metric is being evaluated.
+       - Stage: the number of stages considered when evaluating the metric.
+       - Value: the achieved metric value.
+     """
 
      aux_df_list = []
      num_folds = len(cv_splits)
