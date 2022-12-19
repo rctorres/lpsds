@@ -1,8 +1,9 @@
 """Test file foor pre_process.py module"""
 
 import pytest
+import numpy as np
 import pandas as pd
-from lpsds.utils import keep, ObjectView, to_list, smart_tuple
+from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation
 
         
 class TestKeep():
@@ -141,3 +142,65 @@ class TestSmartTuple:
         assert ret[0] == 10
         assert ret[1] == 20
         assert ret[2] == 30
+
+
+
+class TestCMAnnotate:
+
+    @pytest.fixture
+    def cm(self):
+        return np.array([
+            [[1,7,20],[40,5,16]],
+            [[19,1,9], [10,21,2]],
+            [[17,14,15],[26,17,18]],
+            [[19,40,21], [32,23,24]]
+        ])
+    
+    @pytest.fixture
+    def fmt_str(self):
+        return '${mean:.2f}^{{+{e_max:.2f}}}_{{-{e_min:.2f}}}$'
+    
+    @pytest.fixture
+    def seed(self):
+        return 23
+    
+    
+    def test_ret_shape(self, cm):
+        ret = confusion_matrix_annotation(cm)
+        assert len(ret.shape) == 2
+        assert ret.shape[0] == 2
+        assert ret.shape[1] == 3
+    
+
+    def test_difference_false(self, cm, fmt_str, seed):
+        ret = confusion_matrix_annotation(cm, use_difference=False, seed=seed)
+        assert ret.iloc[0][0] == fmt_str.format(mean=14.00, e_min=5.49, e_max=19.00)
+        assert ret.iloc[0][1] == fmt_str.format(mean=15.50, e_min=4.00, e_max=31.75)
+        assert ret.iloc[0][2] == fmt_str.format(mean=16.25, e_min=11.75, e_max=20.50)
+
+        assert ret.iloc[1][0] == fmt_str.format(mean=27.00, e_min=15.50, e_max=36.50)
+        assert ret.iloc[1][1] == fmt_str.format(mean=16.50, e_min=8.98, e_max=22.00)
+        assert ret.iloc[1][2] == fmt_str.format(mean=15.00, e_min=6.00, e_max=22.00)
+
+
+    def test_difference_true(self, cm, fmt_str, seed):
+        ret = confusion_matrix_annotation(cm, use_difference=True, seed=seed)
+        assert ret.iloc[0][0] == fmt_str.format(mean=14.00, e_min=8.51, e_max=5.00)
+        assert ret.iloc[0][1] == fmt_str.format(mean=15.50, e_min=11.50, e_max=16.25)
+        assert ret.iloc[0][2] == fmt_str.format(mean=16.25, e_min=4.5, e_max=4.25)
+
+        assert ret.iloc[1][0] == fmt_str.format(mean=27.00, e_min=11.50, e_max=9.50)
+        assert ret.iloc[1][1] == fmt_str.format(mean=16.50, e_min=7.52, e_max=5.50)
+        assert ret.iloc[1][2] == fmt_str.format(mean=15.00, e_min=9.00, e_max=7.00)
+
+
+    def test_fmt_str(self, cm, seed):
+        fmt_str = '{mean:.0f}, {e_min:.0f}, {e_max:.0f}'
+        ret = confusion_matrix_annotation(cm, use_difference=True, seed=seed, fmt_str=fmt_str)
+        assert ret.iloc[0][0] == fmt_str.format(mean=14, e_min=9, e_max=5)
+        assert ret.iloc[0][1] == fmt_str.format(mean=16, e_min=12, e_max=16)
+        assert ret.iloc[0][2] == fmt_str.format(mean=16, e_min=4, e_max=4)
+
+        assert ret.iloc[1][0] == fmt_str.format(mean=27, e_min=12, e_max=10)
+        assert ret.iloc[1][1] == fmt_str.format(mean=16, e_min=8, e_max=6)
+        assert ret.iloc[1][2] == fmt_str.format(mean=15, e_min=9, e_max=7)
