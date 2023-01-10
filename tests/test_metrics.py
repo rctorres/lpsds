@@ -58,3 +58,12 @@ class TestSKLearnMetrics:
     ])
     def test_array(self, y_true, y_pred, metric_func, target_val):
         assert metric_func(y_true, y_pred) == pytest.approx(target_val, 0.0000001)
+
+    @pytest.mark.parametrize(("metric_func"), [
+        (sensitivity),
+        (specificity),
+        (sp_score),
+    ])
+    def test_return_float(self, y_true, y_pred, metric_func):
+        """Tests whether the returned value is in float format"""
+        assert type(metric_func(y_true, y_pred)) == float

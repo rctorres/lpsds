@@ -60,7 +60,7 @@ def sensitivity(y_true, y_pred):
 
   Calculate the sensitivity score. Sklearn style.
   """
-  return recall_score(y_true, y_pred, pos_label=1)
+  return float(recall_score(y_true, y_pred, pos_label=1))
 
 
 def specificity(y_true, y_pred):
@@ -69,7 +69,7 @@ def specificity(y_true, y_pred):
 
   Calculate the specificity score. Sklearn style.
   """
-  return recall_score(y_true, y_pred, pos_label=0)
+  return float(recall_score(y_true, y_pred, pos_label=0))
 
 
 def sp_score(y_true, y_pred):
@@ -78,4 +78,4 @@ def sp_score(y_true, y_pred):
 
   Calculate the sp_score score. Sklearn style.
   """
-  return sp_index(sensitivity(y_true, y_pred), specificity(y_true, y_pred))
+  return float(sp_index(sensitivity(y_true, y_pred), specificity(y_true, y_pred)))
