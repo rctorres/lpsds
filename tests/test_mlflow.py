@@ -73,6 +73,10 @@ class MLFlowBase:
             sp = 0,
             f1 = 10,
         )
+        ret.data.params = dict(
+            param_1 ='param_1_value',
+            param_2 ='param_2_value',
+        )
         return ret
     
     @staticmethod
@@ -323,3 +327,20 @@ class TestGetExperiment(MLFlowBase):
     def test_positive_case(self):
         a = MLFlow('123')
         assert a.get_experiment().name == 'test_experiment_123987'
+
+
+class TestGetParams(MLFlowBase):
+
+    def test_num_returns(self, mlf_obj):
+        par = mlf_obj.get_params()
+        assert len(par) == 2
+
+    def test_scalars(self, mlf_obj):
+        par = mlf_obj.get_params()
+        assert par['param_1'] == 'param_1_value'
+        assert par['param_2'] == 'param_2_value'
+
+
+    def test_object_view(self, mlf_obj):
+        par = mlf_obj.get_params()
+        assert isinstance(par, ObjectView)

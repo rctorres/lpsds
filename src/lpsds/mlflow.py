@@ -78,7 +78,7 @@ class MLFlow:
           - database
           - best_fold_id
         """
-        return self.run.data.params
+        return ObjectView(self.run.data.params)
 
     def get_run_id(self) -> str:
         """
