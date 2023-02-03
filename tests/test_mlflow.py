@@ -257,6 +257,11 @@ class TestGetMetrics(MLFlowBase):
         assert met['acc'] == 0.99
 
 
+    def test_object_view(self, mlf_obj):
+        met = mlf_obj.get_metrics(as_dict=True)
+        assert isinstance(met, ObjectView)
+
+
     def test_vectors(self, mlf_obj):
         met = mlf_obj.get_metrics(as_dict=True)
         assert np.array_equal(met['sp'], np.array([1,2,3,4,5]))

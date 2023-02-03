@@ -109,7 +109,6 @@ class MLFlow:
         
         if not as_dict: return df
     
-        ret = ObjectView()
         #Creating a dataframe where vectorized metrics are saved as lists
         grp = df.groupby('metric').value.agg(lambda x: x.iloc[0] if len(x) == 1 else x.to_list()).to_dict()
         
@@ -117,7 +116,7 @@ class MLFlow:
         for k,v in grp.items():
             if hasattr(v, '__iter__'):
                 grp[k] = np.array(v)
-        return grp
+        return ObjectView(grp)
 
 
 
