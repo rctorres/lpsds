@@ -1,5 +1,5 @@
 {
-    "name": "TB-CAD Validation",
+    "name": "lpsds",
     "dockerComposeFile": ["./docker-compose.yml"],
     "service": "main",
     "workspaceFolder": "/work",
