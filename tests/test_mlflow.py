@@ -1,6 +1,4 @@
 import os
-import shutil
-import tempfile
 import numpy as np
 import pandas as pd
 import pytest
@@ -55,6 +53,7 @@ class MLFlowBase:
         ret = ObjectView()
         ret.info = ObjectView()
         ret.info.run_id = '112233'
+        ret.info.experiment_id = '112233'
         return ret
     
     @staticmethod
@@ -63,6 +62,9 @@ class MLFlowBase:
         Mocks mlflow.active_run behavior
         """
         ret = ObjectView()
+        ret.info = ObjectView()
+        ret.info.run_id = run_id
+        ret.info.experiment_id = run_id + '987'
         ret.data = ObjectView()
         ret.data.metrics = dict(
             sp_mean = 0.9,
@@ -72,12 +74,19 @@ class MLFlowBase:
             f1 = 10,
         )
         return ret
+    
+    @staticmethod
+    def mocked_get_experiment(exp_id):
+        ret = ObjectView()
+        ret.name = f'test_experiment_{exp_id}'
+        return ret
 
     @pytest.fixture(autouse=True)
     def set_mlflow_patches(self, monkeypatch, request):
         if 'noautofixt' in request.keywords: return
         monkeypatch.setattr(mlflow, 'active_run', MLFlowBase.mocked_active_run)
         monkeypatch.setattr(mlflow, 'get_run', MLFlowBase.mocked_get_run)
+        monkeypatch.setattr(mlflow, 'get_experiment', MLFlowBase.mocked_get_experiment)
         monkeypatch.setattr(mlflow.tracking, 'MlflowClient', MLFlowBase.MockedRunClient)
 
 
@@ -303,3 +312,9 @@ class TestGetDataFrame(MLFlowBase):
         assert df.iloc[1].b == 22
         assert df.iloc[2].a == 3
         assert df.iloc[2].b == 33
+
+
+class TestGetExperiment(MLFlowBase):
+    def test_positive_case(self):
+        a = MLFlow('123')
+        assert a.get_experiment().name == 'test_experiment_123987'
