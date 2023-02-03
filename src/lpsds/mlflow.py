@@ -138,3 +138,13 @@ class MLFlow:
             full_path = os.path.join(folder, var_name + '.parquet')
             local_path = self.run_client.download_artifacts(self.run_id, full_path, temp_path)
             return pd.read_parquet(local_path)
+
+
+    def get_experiment(self) -> mlflow.entities.Experiment:
+        """
+        def get_experiment(self) -> mlflow.entities.Experiment
+
+        Returns an instance to the experiment that contains the class given mlflow run id.
+        """
+        exp_id = self.run.info.experiment_id
+        return mlflow.get_experiment(exp_id)
