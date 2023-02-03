@@ -32,13 +32,6 @@ class MLFlowBase:
             ret_map['sp'] = sp_list
             ret_map['f1'] = f1_list
             return ret_map[metric_name]
-        
-        def download_artifacts(self, run_id, full_path, temp_path):
-            df = pd.DataFrame({'a' : [1,2,3], 'b' : [11,22,33]})
-            fname = os.path.split(full_path)[1]
-            local_name = os.path.join(temp_path, fname)
-            df.to_parquet(local_name)
-            return local_name
 
 
     @pytest.fixture
@@ -85,6 +78,15 @@ class MLFlowBase:
         ret.name = f'test_experiment_{exp_id}'
         return ret
 
+
+    def mocked_download_artifacts(run_id, artifact_path, dst_path):
+        df = pd.DataFrame({'a' : [1,2,3], 'b' : [11,22,33]})
+        fname = os.path.split(artifact_path)[1]
+        local_name = os.path.join(dst_path, fname)
+        df.to_parquet(local_name)
+        return local_name
+
+
     @pytest.fixture(autouse=True)
     def set_mlflow_patches(self, monkeypatch, request):
         if 'noautofixt' in request.keywords: return
@@ -92,6 +94,7 @@ class MLFlowBase:
         monkeypatch.setattr(mlflow, 'get_run', MLFlowBase.mocked_get_run)
         monkeypatch.setattr(mlflow, 'get_experiment', MLFlowBase.mocked_get_experiment)
         monkeypatch.setattr(mlflow.tracking, 'MlflowClient', MLFlowBase.MockedRunClient)
+        monkeypatch.setattr(mlflow.artifacts, 'download_artifacts', MLFlowBase.mocked_download_artifacts)
 
 
 class TestInit(MLFlowBase):

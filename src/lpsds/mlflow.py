@@ -135,7 +135,7 @@ class MLFlow:
 
         with tempfile.TemporaryDirectory() as temp_path:
             full_path = os.path.join(folder, var_name + '.parquet')
-            local_path = self.run_client.download_artifacts(self.run_id, full_path, temp_path)
+            local_path = mlflow.artifacts.download_artifacts(run_id=self.run_id, artifact_path=full_path, dst_path=temp_path)
             return pd.read_parquet(local_path)
 
 
