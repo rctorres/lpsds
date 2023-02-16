@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from lpsds.model import get_operation_model, create_validation_dataset
+from lpsds.model import get_operation_model, create_validation_dataset, feature_importances
 
 
 class DummyModel:
@@ -160,3 +160,42 @@ class TesteCreateValidationDataset:
         assert X.y_true.iloc[1] == -1
         assert X.y_pred.iloc[0] == 0.1
         assert X.y_pred.iloc[1] == -0.8
+
+
+class TestFeatureImportance:
+    
+    class Model:
+        def predict_proba(self, X):
+            return X.sum(axis=1).to_numpy()
+
+    @pytest.fixture
+    def model(self):
+        return TestFeatureImportance.Model()
+    
+    @pytest.fixture
+    def X(self):
+        return pd.DataFrame({'a': [3, 11], 'b' : [20, 30]})
+    
+    @pytest.fixture
+    def y_true(self):
+        return np.array([22, 45])
+    
+    def test_columns(self, model, X, y_true):
+        relev = feature_importances(model, X, y_true)
+        assert relev.index.name == 'feature'
+        assert relev.columns[0] == 'importance'
+
+    def test_rows(self, model, X, y_true):
+        relev = feature_importances(model, X, y_true)
+        assert relev.index[0] == 'a'
+        assert relev.index[1] == 'b'
+
+    def test_shape(self, model, X, y_true):
+        relev = feature_importances(model, X, y_true)
+        assert relev.shape[0] == 2
+        assert relev.shape[1] == 1
+
+    def test_positive_case(self, model, X, y_true):
+        relev = feature_importances(model, X, y_true)
+        assert relev.loc['a', 'importance'] == -36
+        assert relev.loc['b', 'importance'] == -50

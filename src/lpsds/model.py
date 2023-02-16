@@ -69,10 +69,10 @@ def get_input_variables_description(X):
     return input_description
 
 
-def features_importance(model, X, y_true, suppressing_function=np.mean,
+def feature_importances(model, X, y_true, suppressing_function=np.mean,
                         metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
     """
-    def features_importance(model, X, y_true, suppressing_function=np.mean,
+    def feature_importances(model, X, y_true, suppressing_function=np.mean,
                         metric_function=mean_squared_error, difference_function=np.subtract) -> pd.DataFrame:
     
     Calculate feature importance using variables suppressing method. The function will suppress
