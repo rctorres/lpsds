@@ -4,6 +4,7 @@ Tools for model handling
 
 from sklearn.metrics import mean_squared_error
 import numpy as np
+import pandas as pd
 
 
 def get_operation_model(model, X, y, metric=mean_squared_error, **kargv):
@@ -67,3 +68,39 @@ def get_input_variables_description(X):
     input_description.columns = ['Input Name', 'Input Type']
     return input_description
 
+
+def features_importance(model, X, y_true, suppressing_function=np.mean,
+                        metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
+    """
+    def features_importance(model, X, y_true, suppressing_function=np.mean,
+                        metric_function=mean_squared_error, difference_function=np.subtract) -> pd.DataFrame:
+    
+    Calculate feature importance using variables suppressing method. The function will suppress
+    ove variable at a time and calculate the difference in a provided metric w.r.t using all features.
+    The higher the difference, the higher the variable importance.
+
+    Input:
+      - model: a trained model defining the predict_proba method.
+      - X: model input set.
+      - y_true: true labes of X.
+      - suppressing_function: the function to be used to suppress the feature. It must receive the feature and
+                              must return a new unique value to represent the feature. Default to arithmetic mean.
+      - metric_function: the metric to be used to evaluate model's performance. Must receive y_true and y_pred and return a scalar.
+      - comparison_function: a function that will compare the metric obtained when suppressing a metric and
+                             the baseline (metric value when no feature is suppressed). Must receive 2 scalars and return a scalar.
+    
+    Returns: a pandas DataFrame where in
+    """
+
+    baseline = metric_function(y_true, model.predict_proba(X))
+
+    ret = {}
+    for c in X.columns:
+        aux = X.copy()
+        aux[c] = suppressing_function(aux[c])
+        relev_metric = metric_function(y_true, model.predict_proba(aux))
+        ret[c] = comparison_function(baseline, relev_metric)
+    
+    ret_df = pd.DataFrame.from_dict(ret, orient='index', columns=['importance'])
+    ret_df.index.set_names('feature', inplace=True)
+    return ret_df
