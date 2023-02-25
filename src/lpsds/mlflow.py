@@ -1,5 +1,6 @@
 import os
 import re
+import yaml
 import numpy as np
 import pandas as pd
 import tempfile
@@ -72,13 +73,21 @@ class MLFlow:
         return ret_map
 
 
-    def get_params(self):
+    def get_params(self, infer_types: bool=False) -> ObjectView:
         """
-        Must return model parameters, such as:
-          - database
-          - best_fold_id
+        Returns model parameters.
+
+        Input:
+          - infer_dtypes: if True, will try to infer values types, since mlflow 
+                          store them as strings.
+        
+        Return: a map with the model parameters.
         """
-        return ObjectView(self.run.data.params)
+        ret = ObjectView(self.run.data.params)
+        for k,v in ret.items():
+            ret[k] = yaml.safe_load(v)
+        return ret
+
 
     def get_run_id(self) -> str:
         """

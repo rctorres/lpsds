@@ -1,4 +1,5 @@
 import os
+import datetime
 import numpy as np
 import pandas as pd
 import pytest
@@ -67,8 +68,11 @@ class MLFlowBase:
             f1 = 10,
         )
         ret.data.params = dict(
-            param_1 ='param_1_value',
-            param_2 ='param_2_value',
+            param_str ='my string',
+            param_int = '123',
+            param_float = '3.14',
+            param_bool = 'True',
+            param_date = '2022-12-24',
         )
         return ret
     
@@ -336,12 +340,25 @@ class TestGetParams(MLFlowBase):
 
     def test_num_returns(self, mlf_obj):
         par = mlf_obj.get_params()
-        assert len(par) == 2
+        assert len(par) == 5
 
-    def test_scalars(self, mlf_obj):
+    def test_str_return(self, mlf_obj):
         par = mlf_obj.get_params()
-        assert par['param_1'] == 'param_1_value'
-        assert par['param_2'] == 'param_2_value'
+        assert par['param_str'] == 'my string'
+        assert par['param_int'] == '123'
+        assert par['param_float'] == '3.14'
+        assert par['param_bool'] == 'True'
+        assert par['param_date'] == '2022-12-24'
+
+
+    def test_infer_type_return(self, mlf_obj):
+        par = mlf_obj.get_params(infer_types=True)
+        assert par['param_str'] == 'my string'
+        assert par['param_int'] == 123
+        assert par['param_float'] == 3.14
+        assert par['param_bool'] == True
+        assert par['param_date'] == datetime.date(2022, 12, 24)
+
 
 
     def test_object_view(self, mlf_obj):
