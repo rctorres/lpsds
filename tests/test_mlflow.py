@@ -343,7 +343,7 @@ class TestGetParams(MLFlowBase):
         assert len(par) == 5
 
     def test_str_return(self, mlf_obj):
-        par = mlf_obj.get_params()
+        par = mlf_obj.get_params(infer_types=False)
         assert par['param_str'] == 'my string'
         assert par['param_int'] == '123'
         assert par['param_float'] == '3.14'

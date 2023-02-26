@@ -84,8 +84,9 @@ class MLFlow:
         Return: a map with the model parameters.
         """
         ret = ObjectView(self.run.data.params)
-        for k,v in ret.items():
-            ret[k] = yaml.safe_load(v)
+        if infer_types:
+            for k,v in ret.items():
+                ret[k] = yaml.safe_load(v)
         return ret
 
 
