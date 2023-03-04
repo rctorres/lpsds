@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title
+from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title, error_bar_roc
 
         
 class TestKeep():
@@ -254,3 +254,72 @@ class TestPrettyTitle:
                                             ])
     def test_new_threshold_large(self, val, ret):
         assert pretty_title(val, abbrev_threshold=20) == ret
+
+
+
+
+class TestErrorBarRoc:
+
+    @pytest.fixture
+    def roc_df(self):
+        df = pd.DataFrame(columns=['fold', 'false_positive', 'true_positive', 'threshold'])
+        df.loc[len(df)] = 0, 0, 0, 0 # tp = 2*fp
+        df.loc[len(df)] = 0, 0.2, 0.4, 0
+        df.loc[len(df)] = 0, 0.3, 0.6, 0
+        df.loc[len(df)] = 0, 1.0, 2.0, 0
+        df.loc[len(df)] = 1, 0, 0, 0 # tp = 10*fp
+        df.loc[len(df)] = 1, 0.6, 6, 0
+        df.loc[len(df)] = 1, 1, 10, 0
+        return df
+
+    @pytest.fixture
+    def ret(self, roc_df):
+        return error_bar_roc(roc_df, num_points=5)
+
+    def test_ret_size(self, ret):
+        assert len(ret) == 10
+
+
+    def test_col_names(self, ret):
+        assert len(ret.columns) == 3
+        assert ret.columns[0] == 'false_positive'
+        assert ret.columns[1] == 'true_positive'
+        assert ret.columns[2] == 'fold'
+    
+    def test_fold_0(self, ret):
+        fold = ret.loc[ret.fold==0]
+        assert len(fold) == 5
+        assert fold.iloc[0].true_positive == 0
+        assert fold.iloc[1].true_positive == 0.5
+        assert fold.iloc[2].true_positive == 1
+        assert fold.iloc[3].true_positive == 1.5
+        assert fold.iloc[4].true_positive == 2
+
+
+    def test_fold_1(self, ret):
+        fold = ret.loc[ret.fold==1]
+        assert len(fold) == 5
+        assert fold.iloc[0].true_positive == 0
+        assert fold.iloc[1].true_positive == 2.5
+        assert fold.iloc[2].true_positive == 5.0
+        assert fold.iloc[3].true_positive == 7.5
+        assert fold.iloc[4].true_positive == 10
+
+    def test_fp_(self, ret):
+        fold0 = ret.loc[ret.fold==0]
+        assert fold0.iloc[0].false_positive == 0
+        assert fold0.iloc[1].false_positive == 0.25
+        assert fold0.iloc[2].false_positive == 0.5
+        assert fold0.iloc[3].false_positive == 0.75
+        assert fold0.iloc[4].false_positive == 1.0
+
+
+    def test_fp_equal(self, ret):
+        fold0 = ret.loc[ret.fold==0]
+        fold1 = ret.loc[ret.fold==1]
+        assert fold0.iloc[0].false_positive == fold1.iloc[0].false_positive
+        assert fold0.iloc[1].false_positive == fold1.iloc[1].false_positive
+        assert fold0.iloc[2].false_positive == fold1.iloc[2].false_positive
+        assert fold0.iloc[3].false_positive == fold1.iloc[3].false_positive
+        assert fold0.iloc[4].false_positive == fold1.iloc[4].false_positive
+    
