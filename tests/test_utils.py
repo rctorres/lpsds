@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation
+from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title
 
         
 class TestKeep():
@@ -204,3 +204,53 @@ class TestCMAnnotate:
         assert ret.iloc[1][0] == fmt_str.format(mean=27, e_min=12, e_max=10)
         assert ret.iloc[1][1] == fmt_str.format(mean=16, e_min=8, e_max=6)
         assert ret.iloc[1][2] == fmt_str.format(mean=15, e_min=9, e_max=7)
+
+
+class TestPrettyTitle:
+
+    @pytest.mark.parametrize(("val", "ret"), [ 
+                                                ('auc', 'AUC'),
+                                                ('Auc', 'AUC'),
+                                                ('aUc', 'AUC'),
+                                                ('auC', 'AUC'),
+                                                ('AUc', 'AUC'),
+                                                ('aUC', 'AUC'),
+                                                ('AUC', 'AUC'),
+                                                ('specificity', 'Specificity'),
+                                                ('Specificity', 'Specificity'),
+                                                ('SPECIFICITY', 'Specificity'),
+                                            ])
+    def test_normal_case(self, val, ret):
+        assert pretty_title(val) == ret
+
+
+    @pytest.mark.parametrize(("val", "ret"), [ 
+                                                ('auc', 'Auc'),
+                                                ('Auc', 'Auc'),
+                                                ('aUc', 'Auc'),
+                                                ('auC', 'Auc'),
+                                                ('AUc', 'Auc'),
+                                                ('aUC', 'Auc'),
+                                                ('AUC', 'Auc'),
+                                                ('specificity', 'Specificity'),
+                                                ('Specificity', 'Specificity'),
+                                                ('SPECIFICITY', 'Specificity'),
+                                            ])
+    def test_new_threshold(self, val, ret):
+        assert pretty_title(val, abbrev_threshold=2) == ret
+
+
+    @pytest.mark.parametrize(("val", "ret"), [ 
+                                                ('auc', 'AUC'),
+                                                ('Auc', 'AUC'),
+                                                ('aUc', 'AUC'),
+                                                ('auC', 'AUC'),
+                                                ('AUc', 'AUC'),
+                                                ('aUC', 'AUC'),
+                                                ('AUC', 'AUC'),
+                                                ('specificity', 'SPECIFICITY'),
+                                                ('Specificity', 'SPECIFICITY'),
+                                                ('SPECIFICITY', 'SPECIFICITY'),
+                                            ])
+    def test_new_threshold_large(self, val, ret):
+        assert pretty_title(val, abbrev_threshold=20) == ret
