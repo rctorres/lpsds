@@ -97,3 +97,59 @@ def confusion_matrix_annotation(cm: np.array, fmt_str: str='${mean:.2f}^{{+{e_ma
             ret.iloc[r][c] = fmt_str.format(mean=mean, e_min=e_min, e_max=e_max)
     
     return ret
+
+
+
+def pretty_title(text :str, abbrev_threshold :int=4) -> str:
+    """
+    def pretty_title(text :str, abbrev_threshold :int=4) -> str:
+
+        Returns a pretty string. If it is an abbreviation (text > than abbrev_threshold),
+        the ext will be put in upper case. Otherwise, it will have all its first letters
+        in upper case the rest in lower case.
+    """
+    return text.upper() if len(text) <= abbrev_threshold else text.capitalize()
+
+
+
+def error_bar_roc(df :pd.DataFrame, tp_col_name :str='true_positive', fp_col_name: str='false_positive', 
+                    fold_col_name :str='fold', threshold_col_name :str='threshold', num_points: int=100) -> pd.DataFrame:
+    """
+    def error_bar_roc(df :pd.DataFrame, tp_col_name :str='true_positive', fp_col_name: str='false_positive', 
+                        fold_col_name :str='fold', threshold_col_name :str='threshold', num_points: int=100) -> pd.DataFrame:
+
+    Creates a new ROC curve for each CV fold, making sure that all folds share the same false alarm values, allowing plotting
+    ROC curve with its error marging.
+
+    Input:
+      - df: a dataframe containing the ROC values in long format (fold x tpr x fpr x threshold). All mentioned ROC values
+            must be present in df.
+      - tp_col_name: the name of the column in df holding the ROC true positive values.
+      - fp_col_name: the name of the column in df holding the ROC false positive values.
+      - fold_col_name: the name of the column in df holding the fold ID of each ROC value.
+      - threshold_col_name: the name of the column in df holding the ROC threshold values.
+      - num_points: how many points will be used to compute the new ROCS.
+    
+    Return: a dataframe where all TP values (for all folds) were computed for the same FP values,
+            so all ROCS have the save FP values and therefore, the same length (num_points).
+            Columns in the new dataframe are::
+                - tp_col_name: the name of the column in df holding the new ROC true positive values.
+                - fp_col_name: the name of the column in df holding the new ROC false positive values.
+                - fold_col_name: the name of the column in df holding the fold ID of each new ROC value.
+    """
+    #false alarm must be in ascending order otherwise np.interp will not work.
+    df = df.sort_values([fold_col_name, threshold_col_name], ascending=False)
+    
+    num_folds = len(df[fold_col_name].unique())
+    mean_fpr = np.linspace(0, 1, num_points)
+    
+    rocs_list = []
+    for fold in range(num_folds):
+        fold_roc = df.loc[df[fold_col_name] == fold]
+        interp_tpr = np.interp(mean_fpr, fold_roc[fp_col_name], fold_roc[tp_col_name])
+        roc_aux = pd.DataFrame({fp_col_name : mean_fpr, tp_col_name : interp_tpr, fold_col_name : fold})
+        rocs_list.append(roc_aux)
+    
+    return pd.concat(rocs_list, ignore_index=True)
+
+
