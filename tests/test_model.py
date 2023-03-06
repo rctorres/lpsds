@@ -165,8 +165,9 @@ class TesteCreateValidationDataset:
 class TestFeatureImportance:
     
     class Model:
-        def predict_proba(self, X):
-            return X.sum(axis=1).to_numpy()
+        def predict(self, X):
+            ret = X.sum(axis=1)
+            return ret if isinstance(ret, np.ndarray) else ret.to_numpy()
 
     @pytest.fixture
     def model(self):
@@ -199,3 +200,9 @@ class TestFeatureImportance:
         relev = feature_importances(model, X, y_true)
         assert relev.loc['a', 'importance'] == -36
         assert relev.loc['b', 'importance'] == -50
+
+    def test_numpy_case(self, model, X, y_true):
+        numpy_X = X.to_numpy()
+        relev = feature_importances(model, numpy_X, y_true)
+        assert relev.loc[0, 'importance'] == -36
+        assert relev.loc[1, 'importance'] == -50
