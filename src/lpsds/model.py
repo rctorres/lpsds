@@ -70,11 +70,11 @@ def get_input_variables_description(X):
     return input_description
 
 
-def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true, suppressing_function=np.mean,
+def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true :Union[pd.Series, np.ndarray], suppressing_function=np.mean,
                         metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
     """
-    def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true, suppressing_function=np.mean,
-                        metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
+        def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true :Union[pd.Series, np.ndarray], suppressing_function=np.mean,
+                                metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
     
     Calculate feature importance using variables suppressing method. The function will suppress
     ove variable at a time and calculate the difference in a provided metric w.r.t using all features.
