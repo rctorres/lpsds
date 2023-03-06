@@ -52,7 +52,7 @@ class MLFlow:
         """
 
         with tempfile.TemporaryDirectory() as temp_path:
-            temp_file_name = os.path.join(temp_path, var_name + '.parquet')
+            temp_file_name = os.path.join(temp_path, var_name)
             save_func_kwargs[fname_param_name] = temp_file_name
             if object_param_name is not None:
                 save_func_kwargs[object_param_name] = obj

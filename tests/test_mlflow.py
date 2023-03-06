@@ -241,12 +241,12 @@ class TestLogArtifact(MLFlowBase):
 
     def test_file_exists(self, monkeypatch, df, mlf_obj):
         monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_file_exists)        
-        mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder', pd.read_parquet)
+        mlf_obj.log_artifact(df, 'filename.parquet', 'mlflow_test_folder', save_func=df.to_parquet, fname_param_name='path', object_param_name=None)
 
 
     def test_file_correct(self, monkeypatch, df, mlf_obj):
         monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_right_content)
-        mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder', pd.read_parquet)
+        mlf_obj.log_artifact(df, 'filename.parquet', 'mlflow_test_folder', save_func=df.to_parquet, fname_param_name='path', object_param_name=None)
 
 
 
