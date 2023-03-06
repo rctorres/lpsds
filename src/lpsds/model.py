@@ -94,13 +94,13 @@ def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true, suppr
               after suppressing the given feature.
     """
 
-    baseline = metric_function(y_true, model.predict_proba(X))
+    baseline = metric_function(y_true, model.predict(X))
 
     ret = {}
     for c in X.columns:
         aux = X.copy()
         aux[c] = suppressing_function(aux[c])
-        relev_metric = metric_function(y_true, model.predict_proba(aux))
+        relev_metric = metric_function(y_true, model.predict(aux))
         ret[c] = comparison_function(baseline, relev_metric)
     
     ret_df = pd.DataFrame.from_dict(ret, orient='index', columns=['importance'])
