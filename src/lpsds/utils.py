@@ -1,6 +1,8 @@
 import collections.abc
 import numpy as np
 import pandas as pd
+import sklearn.pipeline
+from typing import Union
 from .metrics import bootstrap_estimate
 
 class ObjectView(dict):
@@ -153,3 +155,30 @@ def error_bar_roc(df :pd.DataFrame, tp_col_name :str='true_positive', fp_col_nam
     return pd.concat(rocs_list, ignore_index=True)
 
 
+
+def pipeline_split(model :sklearn.pipeline.Pipeline, X: Union[pd.DataFrame, np.ndarray]=None):
+    """
+    def pipeline_input_split(model :sklearn.pipeline.Pipeline, X: Union[pd.DataFrame, np.ndarray]=None):
+    
+    Breaks a pipeline into 2 sections: preprocessing and estimator sections. If X is provided, the function
+    will apply the pre-processing chain on it, and return it in a stage right before it would be fed to the
+    pipeline estimator.
+
+    Input:
+      - model: a sklearn-li Pipeline object
+      - X: an input dataset.
+    
+      Returns:
+        - A list with the pipeline pre-processing steps.
+        - The estimator object at the end of the pipeline.
+        - Pre-processed X (the values of X right before it will be fed to the pipeline estimator)
+    """
+    
+    pre_processing = model.steps[:-1]
+    estimator = model.steps[-1]
+    
+    if X is not None:
+        for _, func in pre_processing:
+            X = func.transform(X)
+    
+    return pre_processing, estimator, X

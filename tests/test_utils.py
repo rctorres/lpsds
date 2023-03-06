@@ -3,7 +3,8 @@
 import pytest
 import numpy as np
 import pandas as pd
-from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title, error_bar_roc
+import sklearn.pipeline
+from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title, error_bar_roc, pipeline_split
 
         
 class TestKeep():
@@ -323,3 +324,56 @@ class TestErrorBarRoc:
         assert fold0.iloc[3].false_positive == fold1.iloc[3].false_positive
         assert fold0.iloc[4].false_positive == fold1.iloc[4].false_positive
     
+
+
+class TestPipelineSplit:
+
+    class PreProc1:
+        def transform(self, X):
+            return X + 1
+    class PreProc2:
+        def transform(self, X):
+            return X + 10
+    class Estimator:
+        def predict(self, X):
+            return np.array([11,22])
+
+
+    @pytest.fixture
+    def pipe(self):
+        return sklearn.pipeline.Pipeline(steps = [
+            ('pp1', TestPipelineSplit.PreProc1()),
+            ('pp2', TestPipelineSplit.PreProc2()),
+            ('est', TestPipelineSplit.Estimator()),
+        ])
+    
+    def test_pre_proc_split(self, pipe):
+        pp, mod, x = pipeline_split(pipe)
+        assert len(pp) == 2
+        assert pp[0][0] == 'pp1'
+        assert isinstance(pp[0][1], TestPipelineSplit.PreProc1)
+        assert pp[1][0] == 'pp2'
+        assert isinstance(pp[1][1], TestPipelineSplit.PreProc2)
+
+
+    def test_estimator(self, pipe):
+        pp, mod, x = pipeline_split(pipe)
+        assert mod[0] == 'est'
+        assert isinstance(mod[1], TestPipelineSplit.Estimator)
+
+
+    def test_x_none(self, pipe):
+        pp, mod, x = pipeline_split(pipe)
+        assert x is None
+
+
+    def test_x(self, pipe):
+        X = np.array([[1,2],
+                      [3,4]])
+        pp, mod, x = pipeline_split(pipe, X)
+        assert X.shape[0] == 2
+        assert X.shape[1] == 2
+        assert x[0][0] == 12
+        assert x[0][1] == 13
+        assert x[1][0] == 14
+        assert x[1][1] == 15
