@@ -96,6 +96,9 @@ def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true, suppr
 
     baseline = metric_function(y_true, model.predict(X))
 
+    if isinstance(X, np.ndarray):
+        X = pd.DataFrame(X, columns=np.arange(X.shape[1]))
+
     ret = {}
     for c in X.columns:
         aux = X.copy()
