@@ -179,7 +179,7 @@ class TestFeatureImportance:
     
     @pytest.fixture
     def y_true(self):
-        return np.array([22, 45])
+        return pd.Series([22, 45])
     
     def test_columns(self, model, X, y_true):
         relev = feature_importances(model, X, y_true)
@@ -201,8 +201,13 @@ class TestFeatureImportance:
         assert relev.loc['a', 'importance'] == -36
         assert relev.loc['b', 'importance'] == -50
 
-    def test_numpy_case(self, model, X, y_true):
-        numpy_X = X.to_numpy()
-        relev = feature_importances(model, numpy_X, y_true)
-        assert relev.loc[0, 'importance'] == -36
-        assert relev.loc[1, 'importance'] == -50
+    @pytest.mark.parametrize(("x", "y"), [ 
+                                (pd.DataFrame({'a': [3, 11], 'b' : [20, 30]}),            pd.Series([22, 45])),
+                                (pd.DataFrame({'a': [3, 11], 'b' : [20, 30]}),            pd.Series([22, 45]).to_numpy()),
+                                (pd.DataFrame({'a': [3, 11], 'b' : [20, 30]}).to_numpy(), pd.Series([22, 45])),
+                                (pd.DataFrame({'a': [3, 11], 'b' : [20, 30]}).to_numpy(), pd.Series([22, 45]).to_numpy()),
+                            ])
+    def test_type_combinations(self, model, x,y):
+        relev = feature_importances(model, x, y)
+        assert relev.iloc[0].importance == -36
+        assert relev.iloc[1].importance == -50
