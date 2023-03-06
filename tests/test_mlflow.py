@@ -240,7 +240,7 @@ class TestLogArtifact(MLFlowBase):
         return pd.DataFrame({'a' : [1,2,3], 'b' : [40,50,60]})
 
     def test_file_exists(self, monkeypatch, df, mlf_obj):
-        monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_file_exists)        
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_file_exists)    
         mlf_obj.log_artifact(df, 'filename.parquet', 'mlflow_test_folder', save_func=df.to_parquet, fname_param_name='path', object_param_name=None)
 
 
@@ -364,3 +364,38 @@ class TestGetParams(MLFlowBase):
     def test_object_view(self, mlf_obj):
         par = mlf_obj.get_params()
         assert isinstance(par, ObjectView)
+
+
+class TestLogDataFrame(MLFlowBase):
+    @staticmethod
+    def assert_file_exists(temp_file_name, folder):
+        assert os.path.exists(temp_file_name)
+        assert folder == 'mlflow_test_folder'
+
+    @staticmethod
+    def assert_right_content(temp_file_name, folder):
+        df = pd.read_parquet(temp_file_name)
+        assert df.shape[0] == 3
+        assert df.shape[1] == 2
+
+        assert df.a.iloc[0] == 1
+        assert df.a.iloc[1] == 2
+        assert df.a.iloc[2] == 3
+
+        assert df.b.iloc[0] == 40
+        assert df.b.iloc[1] == 50
+        assert df.b.iloc[2] == 60
+
+
+    @pytest.fixture
+    def df(self):
+        return pd.DataFrame({'a' : [1,2,3], 'b' : [40,50,60]})
+
+    def test_file_exists(self, monkeypatch, df, mlf_obj):
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_file_exists)    
+        mlf_obj.log_dataframe(df, 'filename', 'mlflow_test_folder')
+
+
+    def test_file_correct(self, monkeypatch, df, mlf_obj):
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_right_content)
+        mlf_obj.log_dataframe(df, 'filename', 'mlflow_test_folder')
