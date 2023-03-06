@@ -213,7 +213,7 @@ class TestLogStatistics(MLFlowBase):
 
 
 
-class TestLogDataFrame(MLFlowBase):
+class TestLogArtifact(MLFlowBase):
 
     @staticmethod
     def assert_file_exists(temp_file_name, folder):
@@ -240,13 +240,13 @@ class TestLogDataFrame(MLFlowBase):
         return pd.DataFrame({'a' : [1,2,3], 'b' : [40,50,60]})
 
     def test_file_exists(self, monkeypatch, df, mlf_obj):
-        monkeypatch.setattr(mlflow, 'log_artifact', TestLogDataFrame.assert_file_exists)        
-        mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder')
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_file_exists)        
+        mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder', pd.read_parquet)
 
 
     def test_file_correct(self, monkeypatch, df, mlf_obj):
-        monkeypatch.setattr(mlflow, 'log_artifact', TestLogDataFrame.assert_right_content)
-        mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder')
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogArtifact.assert_right_content)
+        mlf_obj.log_dataframe(df, 'filename.parquet', 'mlflow_test_folder', pd.read_parquet)
 
 
 
@@ -305,10 +305,10 @@ class TestGetMetrics(MLFlowBase):
 
 
 
-class TestGetDataFrame(MLFlowBase):
+class TestGetArtifact(MLFlowBase):
 
     def test_operation_no_folder(self, mlf_obj):
-        df = mlf_obj.get_dataframe('my_df')
+        df = mlf_obj.get_artifact('my_df', load_func=pd.read_parquet)
         assert df.shape[0] == 3
         assert df.shape[1] == 2
         assert df.iloc[0].a == 1
@@ -319,7 +319,7 @@ class TestGetDataFrame(MLFlowBase):
         assert df.iloc[2].b == 33
 
     def test_operation_with_folder(self, mlf_obj):
-        df = mlf_obj.get_dataframe('my_df', 'folder/path')
+        df = mlf_obj.get_artifact('my_df', 'folder/path', load_func=pd.read_parquet)
         assert df.shape[0] == 3
         assert df.shape[1] == 2
         assert df.iloc[0].a == 1
