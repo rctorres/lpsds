@@ -149,6 +149,28 @@ class MLFlow:
             return pd.read_parquet(local_path)
 
 
+    def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs):
+        """"
+        def get_artifact(self, var_name: str, folder: str='', load_func=np.load):
+
+        Load an artifact using the provided loading function.
+
+        Input parameters:
+        - var_name: the name the dataframe have within MLFlow (must include extensions, if existing).
+        - folder: the path (in MLFlow) to where the dataframe will be loaded from.
+        - load_func: the function used to load the required artifact.
+        
+        Returns whatever load_func returns.
+        """
+
+        with tempfile.TemporaryDirectory() as temp_path:
+            full_path = os.path.join(folder, var_name)
+            local_path = mlflow.artifacts.download_artifacts(run_id=self.run_id, artifact_path=full_path, dst_path=temp_path)
+            return load_func(local_path, **load_func_kwargs)
+
+
+
+
     def get_experiment(self) -> mlflow.entities.Experiment:
         """
         def get_experiment(self) -> mlflow.entities.Experiment
