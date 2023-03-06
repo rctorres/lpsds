@@ -32,10 +32,23 @@ class MLFlow:
         - folder: the path (in MLFlow) to where the dataframe will be saved.
         """
 
-        with tempfile.TemporaryDirectory() as temp_path:
-            temp_file_name = os.path.join(temp_path, var_name + '.parquet')
-            df.to_parquet(temp_file_name, index=False)
-            mlflow.log_artifact(temp_file_name, folder)
+        self.log_artifact(df, var_name + '.parquet', folder, save_func=df.to_parquet, object_param_name=None, fname_param_name='path')
+
+
+    def log_numpy(self, mat: np.ndarray, var_name: str, folder: str=''):
+        """"
+        def log_numpy(self, mat: np.ndarray, var_name: str, folder: str='')
+
+        Saves a numpy matrix to MLFlow as a .np file.
+
+        Input parameters:
+        - df: the pandas.DataFrame object to be saved.
+        - var_name: the name the dataframe will have within MLFlow.
+        - folder: the path (in MLFlow) to where the dataframe will be saved.
+        """
+
+        self.log_artifact(mat, var_name + '.npy', folder, allow_pickle=False)
+
 
 
     def log_artifact(self, obj: pd.DataFrame, var_name: str, folder: str='', save_func=np.save,
