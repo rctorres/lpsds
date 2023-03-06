@@ -184,7 +184,7 @@ class MLFlow:
         Return a pandas.DataFrame with the collected info.
         """
 
-        return self.get_artifact(var_name, folder, pd.read_parquet)
+        return self.get_artifact(var_name + '.parquet', folder, pd.read_parquet)
 
 
     def get_numpy(self, var_name: str, folder: str='') -> np.ndarray:
@@ -200,7 +200,7 @@ class MLFlow:
         Return a np.ndarray with the collected info.
         """
 
-        return self.get_artifact(var_name, folder, np.load, allow_pickle=False)
+        return self.get_artifact(var_name + '.npy', folder, np.load, allow_pickle=False)
 
 
 
