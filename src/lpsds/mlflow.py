@@ -38,6 +38,29 @@ class MLFlow:
             mlflow.log_artifact(temp_file_name, folder)
 
 
+    def log_artifact(self, obj: pd.DataFrame, var_name: str, folder: str='', save_func=np.save,
+                     object_param_name='arr', fname_param_name='file', **save_func_kwargs):
+        """"
+        def log_dataframe(df, var_name, folder='')
+
+        Saves a pandas dataframe to MLFlow as a .parquet file.
+
+        Input parameters:
+        - df: the pandas.DataFrame object to be saved.
+        - var_name: the name the dataframe will have within MLFlow.
+        - folder: the path (in MLFlow) to where the dataframe will be saved.
+        """
+
+        with tempfile.TemporaryDirectory() as temp_path:
+            temp_file_name = os.path.join(temp_path, var_name + '.parquet')
+            save_func_kwargs[fname_param_name] = temp_file_name
+            if object_param_name is not None:
+                save_func_kwargs[object_param_name] = obj
+            save_func(**save_func_kwargs)
+            mlflow.log_artifact(temp_file_name, folder)
+
+
+
     def log_statistics(self, cv_model: dict) -> dict:
         """
         def log_statistics(cv_model)
