@@ -414,3 +414,67 @@ class TestLogNumpy(MLFlowBase):
     def test_file_correct(self, monkeypatch, df, mlf_obj):
         monkeypatch.setattr(mlflow, 'log_artifact', TestLogNumpy.assert_right_content)
         mlf_obj.log_numpy(df, 'filename', 'mlflow_test_folder')
+
+
+
+class TestGetDataFrame(MLFlowBase):
+
+    def test_operation_no_folder(self, mlf_obj):
+        df = mlf_obj.get_dataframe('my_df')
+        assert df.shape[0] == 3
+        assert df.shape[1] == 2
+        assert df.iloc[0].a == 1
+        assert df.iloc[0].b == 11
+        assert df.iloc[1].a == 2
+        assert df.iloc[1].b == 22
+        assert df.iloc[2].a == 3
+        assert df.iloc[2].b == 33
+
+    def test_operation_with_folder(self, mlf_obj):
+        df = mlf_obj.get_dataframe('my_df', 'folder/path')
+        assert df.shape[0] == 3
+        assert df.shape[1] == 2
+        assert df.iloc[0].a == 1
+        assert df.iloc[0].b == 11
+        assert df.iloc[1].a == 2
+        assert df.iloc[1].b == 22
+        assert df.iloc[2].a == 3
+        assert df.iloc[2].b == 33
+
+
+
+
+class TestGetNumpy(MLFlowBase):
+
+    @staticmethod
+    def mocked_download_artifacts_numpy(run_id, artifact_path, dst_path):
+        df = np.array([[1,2,3],[11,22,33]])
+        fname = os.path.split(artifact_path)[1]
+        local_name = os.path.join(dst_path, fname + '.npy')
+        np.save(local_name, df)
+        return local_name
+
+
+    def test_operation_no_folder(self, mlf_obj, monkeypatch):
+        monkeypatch.setattr(mlflow.artifacts, 'download_artifacts', TestGetNumpy.mocked_download_artifacts_numpy)
+        df = mlf_obj.get_numpy('my_df')
+        assert df.shape[0] == 2
+        assert df.shape[1] == 3
+        assert df[0][0] == 1
+        assert df[0][1] == 2
+        assert df[0][2] == 3
+        assert df[1][0] == 11
+        assert df[1][1] == 22
+        assert df[1][2] == 33
+
+    def test_operation_with_folder(self, mlf_obj, monkeypatch):
+        monkeypatch.setattr(mlflow.artifacts, 'download_artifacts', TestGetNumpy.mocked_download_artifacts_numpy)
+        df = mlf_obj.get_numpy('my_df', 'folder/path')
+        assert df.shape[0] == 2
+        assert df.shape[1] == 3
+        assert df[0][0] == 1
+        assert df[0][1] == 2
+        assert df[0][2] == 3
+        assert df[1][0] == 11
+        assert df[1][1] == 22
+        assert df[1][2] == 33

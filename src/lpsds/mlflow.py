@@ -179,10 +179,24 @@ class MLFlow:
         Return a pandas.DataFrame with the collected info.
         """
 
-        with tempfile.TemporaryDirectory() as temp_path:
-            full_path = os.path.join(folder, var_name + '.parquet')
-            local_path = mlflow.artifacts.download_artifacts(run_id=self.run_id, artifact_path=full_path, dst_path=temp_path)
-            return pd.read_parquet(local_path)
+        return self.get_artifact(var_name, folder, pd.read_parquet)
+
+
+    def get_numpy(self, var_name: str, folder: str='') -> pd.DataFrame:
+        """"
+        def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
+
+        Load a pandas dataframe saved to MLFlow as a .parquet file.
+
+        Input parameters:
+        - var_name: the name the dataframe have within MLFlow.
+        - folder: the path (in MLFlow) to where the dataframe will be loaded from.
+        
+        Return a pandas.DataFrame with the collected info.
+        """
+
+        return self.get_artifact(var_name, folder, np.load, allow_pickle=False)
+
 
 
     def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs):
