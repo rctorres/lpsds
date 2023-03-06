@@ -5,6 +5,7 @@ Tools for model handling
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
+from typing import Union
 
 
 def get_operation_model(model, X, y, metric=mean_squared_error, **kargv):
@@ -69,11 +70,11 @@ def get_input_variables_description(X):
     return input_description
 
 
-def feature_importances(model, X, y_true, suppressing_function=np.mean,
+def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true, suppressing_function=np.mean,
                         metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
     """
-    def feature_importances(model, X, y_true, suppressing_function=np.mean,
-                        metric_function=mean_squared_error, difference_function=np.subtract) -> pd.DataFrame:
+    def feature_importances(model, X :Union[pd.DataFrame, np.ndarray], y_true, suppressing_function=np.mean,
+                        metric_function=mean_squared_error, comparison_function=np.subtract) -> pd.DataFrame:
     
     Calculate feature importance using variables suppressing method. The function will suppress
     ove variable at a time and calculate the difference in a provided metric w.r.t using all features.
@@ -89,7 +90,8 @@ def feature_importances(model, X, y_true, suppressing_function=np.mean,
       - comparison_function: a function that will compare the metric obtained when suppressing a metric and
                              the baseline (metric value when no feature is suppressed). Must receive 2 scalars and return a scalar.
     
-    Returns: a pandas DataFrame where in
+    Returns: a pandas DataFrame where the index is the feature name and the column ('improtance') is the metric deviation
+              after suppressing the given feature.
     """
 
     baseline = metric_function(y_true, model.predict_proba(X))
