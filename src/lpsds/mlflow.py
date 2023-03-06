@@ -20,9 +20,9 @@ class MLFlow:
         self.run = mlflow.get_run(self.run_id)
         self.run_client = mlflow.tracking.MlflowClient()
 
-    def log_dataframe(self, df: pd.DataFrame, var_name: str, folder: str=''):
+    def log_dataframe(self, df: pd.DataFrame, var_name: str, folder: str='') -> None:
         """"
-        def log_dataframe(df, var_name, folder='')
+        def log_dataframe(self, df: pd.DataFrame, var_name: str, folder: str='') -> None
 
         Saves a pandas dataframe to MLFlow as a .parquet file.
 
@@ -35,14 +35,14 @@ class MLFlow:
         self.log_artifact(df, var_name + '.parquet', folder, save_func=df.to_parquet, object_param_name=None, fname_param_name='path')
 
 
-    def log_numpy(self, mat: np.ndarray, var_name: str, folder: str=''):
+    def log_numpy(self, mat: np.ndarray, var_name: str, folder: str='') -> None:
         """"
-        def log_numpy(self, mat: np.ndarray, var_name: str, folder: str='')
+        def log_numpy(self, mat: np.ndarray, var_name: str, folder: str='') -> None
 
         Saves a numpy matrix to MLFlow as a .np file.
 
         Input parameters:
-        - df: the pandas.DataFrame object to be saved.
+        - mat: the np.ndarray object to be saved.
         - var_name: the name the dataframe will have within MLFlow.
         - folder: the path (in MLFlow) to where the dataframe will be saved.
         """
@@ -51,17 +51,22 @@ class MLFlow:
 
 
 
-    def log_artifact(self, obj: pd.DataFrame, var_name: str, folder: str='', save_func=np.save,
-                     object_param_name='arr', fname_param_name='file', **save_func_kwargs):
+    def log_artifact(self, obj, var_name: str, folder: str='', save_func=np.save,
+                     object_param_name='arr', fname_param_name='file', **save_func_kwargs) -> None:
         """"
-        def log_dataframe(df, var_name, folder='')
+        def log_artifact(self, obj, var_name: str, folder: str='', save_func=np.save,
+                         object_param_name='arr', fname_param_name='file', **save_func_kwargs) -> None:
 
-        Saves a pandas dataframe to MLFlow as a .parquet file.
+        Saves an object of any type to mlflow.
 
         Input parameters:
-        - df: the pandas.DataFrame object to be saved.
+        - obj: the object you want to save to MLFlow.
         - var_name: the name the dataframe will have within MLFlow.
         - folder: the path (in MLFlow) to where the dataframe will be saved.
+        - save_func: a reference to a function which is responsible to save the passed object to disk (obj.to_parquet, np.save, etc.)
+        - object_param_name: the save_func parameter name used to receive obj when saving (arr in np.save, for instance).
+        - fname_param_name: the save_func parameter name used to receive the path where the file will be saved (path in np.save, for instance).
+        - save_func_kwargs: additional parameters to be passed to save_func.
         """
 
         with tempfile.TemporaryDirectory() as temp_path:
@@ -182,17 +187,17 @@ class MLFlow:
         return self.get_artifact(var_name, folder, pd.read_parquet)
 
 
-    def get_numpy(self, var_name: str, folder: str='') -> pd.DataFrame:
+    def get_numpy(self, var_name: str, folder: str='') -> np.ndarray:
         """"
-        def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
+        def get_numpy(self, var_name: str, folder: str='') -> np.ndarray:
 
-        Load a pandas dataframe saved to MLFlow as a .parquet file.
+        Load a numpy.ndarray object saved to MLFlow as a .parquet file.
 
         Input parameters:
         - var_name: the name the dataframe have within MLFlow.
         - folder: the path (in MLFlow) to where the dataframe will be loaded from.
         
-        Return a pandas.DataFrame with the collected info.
+        Return a np.ndarray with the collected info.
         """
 
         return self.get_artifact(var_name, folder, np.load, allow_pickle=False)
@@ -201,14 +206,15 @@ class MLFlow:
 
     def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs):
         """"
-        def get_artifact(self, var_name: str, folder: str='', load_func=np.load):
+        def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs)
 
         Load an artifact using the provided loading function.
 
         Input parameters:
         - var_name: the name the dataframe have within MLFlow (must include extensions, if existing).
         - folder: the path (in MLFlow) to where the dataframe will be loaded from.
-        - load_func: the function used to load the required artifact.
+        - load_func: the function used to load the required artifact (pd.read_parquet, np.load, etc).
+        - load_func_kwargs: additional aprameters to be passed to load_func
         
         Returns whatever load_func returns.
         """
