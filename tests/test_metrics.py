@@ -3,7 +3,7 @@
 import pytest
 import math
 import numpy as np
-from lpsds.metrics import sp_index, sensitivity, specificity, sp_score
+from lpsds.metrics import sp_index, sensitivity, specificity, sp_score, ppv, npv
 
 class TestSPIndex:
     """TEsts sp_index function"""
@@ -49,12 +49,14 @@ class TestSKLearnMetrics:
 
     @pytest.fixture
     def y_pred(self):
-        return np.array([0,0,1,1,1,0,0,1,1,1])
+        return np.array([0,0,1,1,1,0,1,1,1,1])
 
     @pytest.mark.parametrize(("metric_func", "target_val"), [
         (sensitivity, 0.6),
-        (specificity, 0.4),
-        (sp_score, 0.4949232),
+        (specificity, 0.2),
+        (sp_score, 0.37224194364083985),
+        (ppv, 0.42857142857142855),
+        (npv, 0.3333333333333333),
     ])
     def test_array(self, y_true, y_pred, metric_func, target_val):
         assert metric_func(y_true, y_pred) == pytest.approx(target_val, 0.0000001)
@@ -63,6 +65,8 @@ class TestSKLearnMetrics:
         (sensitivity),
         (specificity),
         (sp_score),
+        (ppv),
+        (npv),
     ])
     def test_return_float(self, y_true, y_pred, metric_func):
         """Tests whether the returned value is in float format"""
