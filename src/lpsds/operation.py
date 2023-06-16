@@ -78,9 +78,9 @@ def get_operation_model(cv_model: dict, cv_splits: list, X: Union[pd.DataFrame, 
     return best_fold, X_tst, y_tst, model
 
 
-def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, **kwargs) -> pd.DataFrame:
+def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, use_proba: bool=False, **kwargs) -> pd.DataFrame:
      """
-     def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, **kwargs) -> pd.DataFrame:
+     def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.array], y_true: Union[pd.Series, np.array], metrics_map: dict, use_proba: bool=False, **kwargs) -> pd.DataFrame:
 
      Evaluates a set of metrics for each stage in an enseble model taking into consideration the cross-validation folds employed for the model development.
 
@@ -95,6 +95,7 @@ def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.arra
       - metrics_map: a map where key is a string label identifying the metric to be evaluated at each stage, and value is a reference
                      to a function in the format metric_function(y_pred, y_true, **kwargs) -> float that will be responsible to evaluate
                      the desired metric for each stage of the ensemble model for each cv-fold.
+      - use_proba: if True, will use the staged predict_proba. Otherwise staged predict will be employed.
 
      Returns: a pandas.DataFrame with the following columns:
        - Metric: the metric name (given by the keys in metrics_map)
@@ -117,9 +118,10 @@ def get_staged_metrics(cv: dict, cv_splits: list, X: Union[pd.DataFrame, np.arra
 
          #Collecting just the final estimator (i.e. the model being applied right after all the pre-processing pipeline).
          estimator = model.steps[-1][1]
+         stage_func = estimator.staged_predict_proba if use_proba else estimator.staged_predict
 
          #Calculating the accuracy for each class w.r.t the number of stages.
-         for stage, out_tst in enumerate(estimator.staged_predict(in_tst)):
+         for stage, out_tst in enumerate(stage_func(in_tst)):
              for metric_name, metric_function in metrics_map.items():
                  metric_value = metric_function(targ_tst, out_tst, **kwargs)
                  #Saving the results in an auxiliary dataframe
