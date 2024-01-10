@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
+from sklearn.pipeline import Pipeline
 from lpsds.preprocessing import StandardNaN, BooleanEncode, SmartFloatCasting, drop_null_cols
 
 
@@ -197,6 +198,14 @@ class TestBooleanEncode:
         assert str(ret.b.dtype) == 'int8'
 
 
+    def test_pandas_pipeline(self, bool_map, df):
+        pipe = Pipeline([
+            ('bool_enc', BooleanEncode(bool_map)),
+        ])
+        pipe.set_output(transform='pandas')
+        pipe.fit_transform(df)
+        assert df.columns[0] == 'a'
+        assert df.columns[1] == 'b'
 
 
 
@@ -342,6 +351,22 @@ class TestStandardNaN:
         assert df.b.iloc[1] == 'To Keep'
 
 
+    def test_pandas_pipeline(self):
+
+        df = pd.DataFrame({
+            'a' : ['To Keep', '<na>'], 
+            'b' : ['None', 'To Keep'], 
+        })
+
+        pipe = Pipeline([
+            ('step_1', StandardNaN()),
+        ])
+        pipe.set_output(transform='pandas')
+        pipe.fit_transform(df)
+        assert df.columns[0] == 'a'
+        assert df.columns[1] == 'b'
+
+
 
 class TestSmartFloatCasting:
     """Test SmartFloatCasting"""
@@ -387,3 +412,13 @@ class TestSmartFloatCasting:
         ret = obj.fit_transform(df)
         assert str(ret.a.dtype) == 'float32'
         assert str(ret.b.dtype) == 'float32'
+
+
+    def test_pandas_pipeline(self, df):
+        pipe = Pipeline([
+            ('step_1', SmartFloatCasting()),
+        ])
+        pipe.set_output(transform='pandas')
+        pipe.fit_transform(df)
+        assert df.columns[0] == 'a'
+        assert df.columns[1] == 'b'

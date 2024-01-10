@@ -4,6 +4,7 @@ Handles data pre_processing related operations.
 
 import re
 import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
 
 
 def drop_null_cols(df, threshold=0.6, inplace=False, std_nan=False, additional_nan_rep: list=None):
@@ -22,7 +23,7 @@ def drop_null_cols(df, threshold=0.6, inplace=False, std_nan=False, additional_n
     return df
 
     
-class BooleanEncode:
+class BooleanEncode(BaseEstimator, TransformerMixin):
     """
     Creates an Boolean type encoding (+1, -1, 0) for categories that can be treated as such.
     Example: employed = ["Yes", "No", "Not Informed"] would become [+1, -1, 0].
@@ -62,8 +63,11 @@ class BooleanEncode:
         """Fit + transform"""
         return self.transform(X)
 
+    def get_feature_names_out(self):
+        pass
 
-class StandardNaN:
+
+class StandardNaN(BaseEstimator, TransformerMixin):
     """
     Standartizes multiple NaN representations into an unique representation.
 
@@ -111,8 +115,11 @@ class StandardNaN:
         """Fit + transform"""
         return self.transform(X)
 
+    def get_feature_names_out(self):
+        pass
 
-class SmartFloatCasting:
+
+class SmartFloatCasting(BaseEstimator, TransformerMixin):
     """
     Cast float represented as strings into a float number by taking into consideration
     specific thousand and decimal separators.
@@ -146,3 +153,6 @@ class SmartFloatCasting:
     def fit_transform(self, X, y=None, **kwargs):
         """Fit + transform"""
         return self.transform(X)
+
+    def get_feature_names_out(self):
+        pass
