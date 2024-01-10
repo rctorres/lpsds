@@ -4,10 +4,16 @@
     "service": "main",
     "workspaceFolder": "/work",
     "shutdownAction": "stopCompose",
-    "extensions" : ["ms-vscode.test-adapter-converter", "hbenl.vscode-test-explorer", "littlefoxteam.vscode-python-test-adapter"],
+    "extensions" : [
+        "ms-python.python",
+        "ms-vscode.test-adapter-converter", 
+        "hbenl.vscode-test-explorer", 
+        "littlefoxteam.vscode-python-test-adapter",
+        "ms-python.pylint"
+    ],
     "postCreateCommand" : [
                              "pip",
                              "install", 
-                             "pylint==2.13.7" 
+                             "pylint"
                          ]
 }
