@@ -213,7 +213,7 @@ class MLFlow:
         exp_id = self.run.info.experiment_id
         return mlflow.get_experiment(exp_id)
 
-    def log_pipeline(self, pipeline: Pipeline, title: str, folder: str = '', 
+    def log_pipeline(self, pipeline: Pipeline, title: str, name: str = 'model_pipeline', folder: str = '',
                      metadata: Optional[Dict[str, str]] = None) -> None:
         """Log a scikit-learn pipeline as an HTML visualization.
 
@@ -231,7 +231,7 @@ class MLFlow:
 
         # Save to temporary file with specific name
         with tempfile.TemporaryDirectory() as temp_dir:
-            pipeline_viz_file = os.path.join(temp_dir, 'model_pipeline.html')
+            pipeline_viz_file = os.path.join(temp_dir, f'{name}.html')
 
             meta_html = '\n'.join([f'<p><strong>{key}:</strong> {value}</p>' for key, value in metadata.items()]) if metadata else ''
 
