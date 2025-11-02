@@ -4,12 +4,11 @@
     "service": "main",
     "workspaceFolder": "/work",
     "shutdownAction": "stopCompose",
-    "extensions" : [
+    "extensions": [
         "ms-python.python",
-        "ms-vscode.test-adapter-converter", 
-        "hbenl.vscode-test-explorer", 
+        "ms-toolsai.jupyter",
         "littlefoxteam.vscode-python-test-adapter",
-        "ms-python.pylint"
+        "ex-codes.pine-script-syntax-highlighter"
     ],
     "postCreateCommand" : [
                              "pip",
