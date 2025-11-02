@@ -1,16 +1,30 @@
 import os
 import re
+import sklearn
 import yaml
 import numpy as np
 import pandas as pd
 import tempfile
 import mlflow
 import lpsds.metrics
+from typing import Dict, Optional, Any, Callable, Union
 from lpsds.utils import ObjectView
+from sklearn.utils import estimator_html_repr
+from sklearn.pipeline import Pipeline
 
 
 class MLFlow:
-    def __init__(self, run_id=None):
+    """MLFlow utilities class for logging and retrieving artifacts, metrics, and models."""
+    
+    def __init__(self, run_id: Optional[str] = None) -> None:
+        """Initialize MLFlow instance.
+        
+        Args:
+            run_id: MLFlow run ID. If None, uses the currently active run.
+            
+        Raises:
+            ValueError: If no run_id provided and no active run exists.
+        """
         active_run = mlflow.active_run()
 
         if run_id is None and active_run is None:
@@ -20,55 +34,41 @@ class MLFlow:
         self.run = mlflow.get_run(self.run_id)
         self.run_client = mlflow.tracking.MlflowClient()
 
-    def log_dataframe(self, df: pd.DataFrame, var_name: str, folder: str='') -> None:
-        """"
-        def log_dataframe(self, df: pd.DataFrame, var_name: str, folder: str='') -> None
+    def log_dataframe(self, df: pd.DataFrame, var_name: str, folder: str = '') -> None:
+        """Save a pandas DataFrame to MLFlow as a parquet file.
 
-        Saves a pandas dataframe to MLFlow as a .parquet file.
-
-        Input parameters:
-        - df: the pandas.DataFrame object to be saved.
-        - var_name: the name the dataframe will have within MLFlow.
-        - folder: the path (in MLFlow) to where the dataframe will be saved.
+        Args:
+            df: The pandas DataFrame object to be saved.
+            var_name: The name the dataframe will have within MLFlow.
+            folder: The path (in MLFlow) to where the dataframe will be saved.
         """
-
         self.log_artifact(df, var_name + '.parquet', folder, save_func=df.to_parquet, object_param_name=None, fname_param_name='path')
 
+    def log_numpy(self, mat: np.ndarray, var_name: str, folder: str = '') -> None:
+        """Save a numpy array to MLFlow as a .npy file.
 
-    def log_numpy(self, mat: np.ndarray, var_name: str, folder: str='') -> None:
-        """"
-        def log_numpy(self, mat: np.ndarray, var_name: str, folder: str='') -> None
-
-        Saves a numpy matrix to MLFlow as a .np file.
-
-        Input parameters:
-        - mat: the np.ndarray object to be saved.
-        - var_name: the name the dataframe will have within MLFlow.
-        - folder: the path (in MLFlow) to where the dataframe will be saved.
+        Args:
+            mat: The numpy array object to be saved.
+            var_name: The name the array will have within MLFlow.
+            folder: The path (in MLFlow) to where the array will be saved.
         """
-
         self.log_artifact(mat, var_name + '.npy', folder, allow_pickle=False)
 
+    def log_artifact(self, obj: Any, var_name: str, folder: str = '', save_func: Callable = np.save,
+                     object_param_name: Optional[str] = 'arr', fname_param_name: str = 'file', 
+                     **save_func_kwargs: Any) -> None:
+        """Save an object of any type to MLFlow.
 
-
-    def log_artifact(self, obj, var_name: str, folder: str='', save_func=np.save,
-                     object_param_name='arr', fname_param_name='file', **save_func_kwargs) -> None:
-        """"
-        def log_artifact(self, obj, var_name: str, folder: str='', save_func=np.save,
-                         object_param_name='arr', fname_param_name='file', **save_func_kwargs) -> None:
-
-        Saves an object of any type to mlflow.
-
-        Input parameters:
-        - obj: the object you want to save to MLFlow.
-        - var_name: the name the dataframe will have within MLFlow.
-        - folder: the path (in MLFlow) to where the dataframe will be saved.
-        - save_func: a reference to a function which is responsible to save the passed object to disk (obj.to_parquet, np.save, etc.)
-        - object_param_name: the save_func parameter name used to receive obj when saving (arr in np.save, for instance).
-        - fname_param_name: the save_func parameter name used to receive the path where the file will be saved (path in np.save, for instance).
-        - save_func_kwargs: additional parameters to be passed to save_func.
+        Args:
+            obj: The object you want to save to MLFlow.
+            var_name: The name the object will have within MLFlow.
+            folder: The path (in MLFlow) to where the object will be saved.
+            save_func: A function responsible for saving the object to disk.
+            object_param_name: The save_func parameter name for the object. If None, 
+                             obj is not passed as a named parameter.
+            fname_param_name: The save_func parameter name for the file path.
+            **save_func_kwargs: Additional parameters to be passed to save_func.
         """
-
         with tempfile.TemporaryDirectory() as temp_path:
             temp_file_name = os.path.join(temp_path, var_name)
             save_func_kwargs[fname_param_name] = temp_file_name
@@ -77,24 +77,18 @@ class MLFlow:
             save_func(**save_func_kwargs)
             mlflow.log_artifact(temp_file_name, folder)
 
-
-
-    def log_statistics(self, cv_model: dict) -> dict:
-        """
-        def log_statistics(cv_model)
-
-        Log metrics obtained via cross validation to MLFlow as statistical summaries.
-        I.e.: the mean value obtained across all folds and its minimum and maximum
-        values so right value will be found in this range (err_min, mean, err_max)
-        with 95% C.I.
-
-        The metrics will be found automatically by looking to keys within cv_model
-        object that has the pattern "test_*".
-
-        Input:
-            cv_model: the result of the sklearn cross_validate function.
+    def log_statistics(self, cv_model: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+        """Log cross-validation metrics to MLFlow as statistical summaries.
         
-        Returns a map where keys are the metric name and values are its mean, err min and err max
+        Automatically finds metrics with the pattern "test_*" and logs their mean,
+        minimum, and maximum values with 95% confidence intervals.
+
+        Args:
+            cv_model: The result of the sklearn cross_validate function.
+        
+        Returns:
+            Dictionary mapping metric names to their statistical summaries 
+            (mean, err_min, err_max).
         """
         regexp = re.compile(r'test_(.+)')
         ret_map = {}
@@ -104,134 +98,176 @@ class MLFlow:
                 mean, err_min, err_max = lpsds.metrics.bootstrap_estimate(values)
                 metric_name = grp.group(1)
                 ret_map[metric_name] = {
-                    f'{metric_name}_err_min' : err_min,
-                    f'{metric_name}_mean' : mean,
-                    f'{metric_name}_err_max' : err_max
+                    f'{metric_name}_err_min': err_min,
+                    f'{metric_name}_mean': mean,
+                    f'{metric_name}_err_max': err_max
                 }
                 mlflow.log_metrics(ret_map[metric_name])
-                for i,v in enumerate(values): mlflow.log_metric(metric_name, v, step=i)
+                for i, v in enumerate(values): 
+                    mlflow.log_metric(metric_name, v, step=i)
         
         return ret_map
 
+    def get_params(self, infer_types: bool = False) -> ObjectView:
+        """Return model parameters.
 
-    def get_params(self, infer_types: bool=False) -> ObjectView:
-        """
-        Returns model parameters.
-
-        Input:
-          - infer_dtypes: if True, will try to infer values types, since mlflow 
-                          store them as strings.
+        Args:
+            infer_types: If True, will try to infer value types since MLFlow 
+                        stores them as strings.
         
-        Return: a map with the model parameters.
+        Returns:
+            ObjectView containing the model parameters.
         """
         ret = ObjectView(self.run.data.params)
         if infer_types:
-            for k,v in ret.items():
+            for k, v in ret.items():
                 ret[k] = yaml.safe_load(v)
         return ret
 
-
     def get_run_id(self) -> str:
-        """
-        def get_run_id(self)
-
-        Returns the experiment´s run id.
+        """Return the experiment's run ID.
+        
+        Returns:
+            The MLFlow run ID.
         """
         return self.run_id
 
+    def get_metrics(self, as_dict: bool = False) -> Union[pd.DataFrame, ObjectView]:
+        """Collect all metrics available for a given run.
 
-    def get_metrics(self, as_dict=False):
+        Args:
+            as_dict: If True, return metrics as a dict where vector metrics 
+                    are returned as numpy arrays. If False, return as DataFrame.
+
+        Returns:
+            Either a pandas DataFrame with all metrics or an ObjectView dict 
+            with metrics as numpy arrays for vector metrics.
         """
-        Collects all metrics available for a given run.
-        
-
-        Returns a pandas dataframe with all metrics.
-
-        if as_dict is True, the method will return the metrics as
-        a dict, where, If the metric is a vector, it is returned as a numpy.array.
-        """
-        
-        #Collecting all metrics in a dataframe
+        # Collecting all metrics in a dataframe
         df = pd.DataFrame(columns=['metric', 'step', 'value'])
         for metric_name in self.run.data.metrics.keys():
             for m in self.run_client.get_metric_history(self.run_id, metric_name):
                 df.loc[len(df)] = metric_name, m.step, m.value
         df.sort_values(['metric', 'step'], inplace=True, ignore_index=True)
         
-        if not as_dict: return df
+        if not as_dict: 
+            return df
     
-        #Creating a dataframe where vectorized metrics are saved as lists
+        # Creating a dataframe where vectorized metrics are saved as lists
         grp = df.groupby('metric').value.agg(lambda x: x.iloc[0] if len(x) == 1 else x.to_list()).to_dict()
         
-        #Lists are converted to np.arrays
-        for k,v in grp.items():
+        # Lists are converted to np.arrays
+        for k, v in grp.items():
             if hasattr(v, '__iter__'):
                 grp[k] = np.array(v)
         return ObjectView(grp)
 
+    def get_dataframe(self, var_name: str, folder: str = '') -> pd.DataFrame:
+        """Load a pandas DataFrame saved to MLFlow as a parquet file.
 
-
-    def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
-        """"
-        def get_dataframe(self, var_name: str, folder: str='') -> pd.DataFrame:
-
-        Load a pandas dataframe saved to MLFlow as a .parquet file.
-
-        Input parameters:
-        - var_name: the name the dataframe have within MLFlow.
-        - folder: the path (in MLFlow) to where the dataframe will be loaded from.
+        Args:
+            var_name: The name the dataframe has within MLFlow.
+            folder: The path (in MLFlow) from where the dataframe will be loaded.
         
-        Return a pandas.DataFrame with the collected info.
+        Returns:
+            pandas DataFrame with the loaded data.
         """
-
         return self.get_artifact(var_name + '.parquet', folder, pd.read_parquet)
 
+    def get_numpy(self, var_name: str, folder: str = '') -> np.ndarray:
+        """Load a numpy array saved to MLFlow as a .npy file.
 
-    def get_numpy(self, var_name: str, folder: str='') -> np.ndarray:
-        """"
-        def get_numpy(self, var_name: str, folder: str='') -> np.ndarray:
-
-        Load a numpy.ndarray object saved to MLFlow as a .parquet file.
-
-        Input parameters:
-        - var_name: the name the dataframe have within MLFlow.
-        - folder: the path (in MLFlow) to where the dataframe will be loaded from.
+        Args:
+            var_name: The name the array has within MLFlow.
+            folder: The path (in MLFlow) from where the array will be loaded.
         
-        Return a np.ndarray with the collected info.
+        Returns:
+            numpy ndarray with the loaded data.
         """
-
         return self.get_artifact(var_name + '.npy', folder, np.load, allow_pickle=False)
 
+    def get_artifact(self, var_name: str, folder: str = '', load_func: Callable = np.load, 
+                     **load_func_kwargs: Any) -> Any:
+        """Load an artifact using the provided loading function.
 
-
-    def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs):
-        """"
-        def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs)
-
-        Load an artifact using the provided loading function.
-
-        Input parameters:
-        - var_name: the name the dataframe have within MLFlow (must include extensions, if existing).
-        - folder: the path (in MLFlow) to where the dataframe will be loaded from.
-        - load_func: the function used to load the required artifact (pd.read_parquet, np.load, etc).
-        - load_func_kwargs: additional aprameters to be passed to load_func
+        Args:
+            var_name: The name the artifact has within MLFlow (must include extensions).
+            folder: The path (in MLFlow) from where the artifact will be loaded.
+            load_func: The function used to load the required artifact.
+            **load_func_kwargs: Additional parameters to be passed to load_func.
         
-        Returns whatever load_func returns.
+        Returns:
+            Whatever the load_func returns.
         """
-
         with tempfile.TemporaryDirectory() as temp_path:
             full_path = os.path.join(folder, var_name)
             local_path = mlflow.artifacts.download_artifacts(run_id=self.run_id, artifact_path=full_path, dst_path=temp_path)
             return load_func(local_path, **load_func_kwargs)
 
-
-
-
     def get_experiment(self) -> mlflow.entities.Experiment:
-        """
-        def get_experiment(self) -> mlflow.entities.Experiment
-
-        Returns an instance to the experiment that contains the class given mlflow run id.
+        """Return the experiment that contains the MLFlow run.
+        
+        Returns:
+            MLFlow Experiment instance containing this run.
         """
         exp_id = self.run.info.experiment_id
         return mlflow.get_experiment(exp_id)
+
+    def log_pipeline(self, pipeline: Pipeline, title: str, name: str = 'model_pipeline', folder: str = '',
+                     metadata: Optional[Dict[str, str]] = None) -> None:
+        """Log a scikit-learn pipeline as an HTML visualization.
+
+        Args:
+            pipeline: The scikit-learn Pipeline to visualize.
+            title: Title for the HTML page.
+            folder: The path (in MLFlow) where the HTML file will be saved.
+            metadata: Optional dictionary of metadata to include in the HTML.
+        """
+        # Enable diagram display
+        sklearn.set_config(display='diagram')
+
+        # Generate HTML representation of pipeline
+        pipeline_html = estimator_html_repr(pipeline)
+
+        # Save to temporary file with specific name
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pipeline_viz_file = os.path.join(temp_dir, f'{name}.html')
+
+            meta_html = '\n'.join([f'<p><strong>{key}:</strong> {value}</p>' for key, value in metadata.items()]) if metadata else ''
+
+            with open(pipeline_viz_file, 'w', encoding='utf-8') as f:
+                f.write(f"""<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>SOM Pipeline - {self.run.info.run_id[:8]}</title>
+                        <style>
+                            body {{ 
+                                background-color: #1e1e1e; 
+                                color: #d4d4d4;
+                                padding: 20px;
+                                font-family: monospace;
+                            }}
+                            h1 {{ color: #4fc3f7; }}
+                            .metadata {{ 
+                                background: #2d2d2d; 
+                                padding: 15px; 
+                                border-radius: 8px;
+                                margin: 20px 0;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <h1>🔧 {title}</h1>
+                        <div class="metadata">
+                            <p><strong>Run ID:</strong> {self.run.info.run_id}</p>
+                            {meta_html}
+                        </div>
+                        <h2>Pipeline Structure</h2>
+                        {pipeline_html}
+                    </body>
+                    </html>
+                """)
+
+            mlflow.log_artifact(pipeline_viz_file, artifact_path=folder)

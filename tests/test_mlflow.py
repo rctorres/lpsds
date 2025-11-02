@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import mlflow
+import sklearn
+import sklearn.utils
 import lpsds.metrics
 from lpsds.mlflow import MLFlow
 from lpsds.utils import ObjectView
@@ -83,6 +85,7 @@ class MLFlowBase:
         return ret
 
 
+    @staticmethod
     def mocked_download_artifacts(run_id, artifact_path, dst_path):
         df = pd.DataFrame({'a' : [1,2,3], 'b' : [11,22,33]})
         fname = os.path.split(artifact_path)[1]
@@ -109,7 +112,7 @@ class TestInit(MLFlowBase):
 
     @pytest.mark.noautofixt
     def test_call_without_id_without_experiment(self):
-        with pytest. raises(ValueError):
+        with pytest.raises(ValueError):
             MLFlow()
 
 
@@ -478,3 +481,197 @@ class TestGetNumpy(MLFlowBase):
         assert df[1][0] == 11
         assert df[1][1] == 22
         assert df[1][2] == 33
+
+
+class TestLogPipeline(MLFlowBase):
+    """Test class for log_pipeline method"""
+
+    @staticmethod
+    def mocked_set_config(display):
+        """Mock sklearn.set_config to avoid side effects"""
+        pass
+
+    @staticmethod
+    def mocked_estimator_html_repr(pipeline):
+        """Mock HTML representation of pipeline"""
+        return '<div class="sklearn-pipeline">Mock Pipeline HTML</div>'
+
+    @staticmethod
+    def mocked_log_artifact(file_path, artifact_path):
+        """Mock mlflow.log_artifact and verify file contents"""
+        # Verify file exists and has correct content
+        assert os.path.exists(file_path)
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Basic HTML structure checks
+        assert '<!DOCTYPE html>' in content
+        assert '<title>SOM Pipeline' in content
+        # Check for sklearn pipeline content (real HTML representation)
+        assert 'Pipeline' in content
+        return None
+
+    @pytest.fixture
+    def mock_pipeline(self):
+        """Create a mock pipeline for testing"""
+        from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.linear_model import LogisticRegression
+        
+        return Pipeline([
+            ('scaler', StandardScaler()),
+            ('classifier', LogisticRegression())
+        ])
+
+    def test_basic_pipeline_logging(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test basic pipeline logging with minimal parameters"""
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogPipeline.mocked_log_artifact)
+        
+        # Should not raise any exceptions
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline')
+
+    def test_pipeline_with_folder(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test pipeline logging with custom folder path"""
+        def assert_folder_path(file_path, artifact_path):
+            assert artifact_path == 'custom/folder'
+            TestLogPipeline.mocked_log_artifact(file_path, artifact_path)
+        
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_folder_path)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline', folder='custom/folder')
+
+    def test_pipeline_with_metadata(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test pipeline logging with metadata dictionary"""
+        def assert_metadata_in_html(file_path, artifact_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Check that metadata is included in HTML
+            assert '<strong>Author:</strong> Test User' in content
+            assert '<strong>Version:</strong> 1.0' in content
+            assert '<strong>Model Type:</strong> Classification' in content
+            
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_metadata_in_html)
+        
+        metadata = {
+            'Author': 'Test User',
+            'Version': '1.0',
+            'Model Type': 'Classification'
+        }
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline', metadata=metadata)
+
+    def test_pipeline_with_empty_metadata(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test pipeline logging with empty metadata dictionary"""
+        def assert_no_metadata_section(file_path, artifact_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Should still have run ID but no additional metadata
+            assert 'Run ID:' in content
+            
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_no_metadata_section)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline', metadata={})
+
+    def test_pipeline_with_none_metadata(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test pipeline logging with None metadata"""
+        def assert_none_metadata(file_path, artifact_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Should only have run ID, no additional metadata HTML
+            assert 'Run ID:' in content
+            # Should not have extra metadata paragraphs
+            content_lines = content.split('\n')
+            metadata_section = [line for line in content_lines if '<strong>' in line and 'Run ID' not in line]
+            assert len(metadata_section) == 0
+            
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_none_metadata)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline', metadata=None)
+
+    def test_html_file_structure(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test that generated HTML file has correct structure"""
+        def assert_html_structure(file_path, artifact_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Check HTML structure
+            assert '<!DOCTYPE html>' in content
+            assert '<html lang="en">' in content
+            assert '<meta charset="UTF-8">' in content
+            assert '<title>SOM Pipeline - 112233' in content  # Full run_id (6 chars)
+            assert '<h1>🔧 Test Pipeline</h1>' in content
+            assert '<h2>Pipeline Structure</h2>' in content
+            assert 'Pipeline' in content  # Check for pipeline content
+            
+            # Check CSS styling
+            assert 'background-color: #1e1e1e' in content
+            assert 'color: #d4d4d4' in content
+            assert 'font-family: monospace' in content
+            
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_html_structure)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline')
+
+    def test_sklearn_config_called(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test that sklearn.set_config is called with display='diagram'"""
+        config_calls = []
+        
+        def track_set_config(display):
+            config_calls.append(display)
+        
+        # Patch in the lpsds.mlflow module where it's imported
+        monkeypatch.setattr('lpsds.mlflow.sklearn.set_config', track_set_config)
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogPipeline.mocked_log_artifact)
+        
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline')
+        
+        assert len(config_calls) == 1
+        assert config_calls[0] == 'diagram'
+
+    def test_estimator_html_repr_called(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test that estimator_html_repr is called with the pipeline"""
+        html_repr_calls = []
+        
+        def track_html_repr(pipeline):
+            html_repr_calls.append(pipeline)
+            return '<div>Mock HTML</div>'
+        
+        # Patch in the lpsds.mlflow module where it's imported
+        monkeypatch.setattr('lpsds.mlflow.estimator_html_repr', track_html_repr)
+        monkeypatch.setattr(mlflow, 'log_artifact', TestLogPipeline.mocked_log_artifact)
+        
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline')
+        
+        assert len(html_repr_calls) == 1
+        assert html_repr_calls[0] is mock_pipeline
+
+    def test_file_name_consistency(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test that the HTML file is always named 'model_pipeline.html'"""
+        def assert_filename(file_path, artifact_path):
+            filename = os.path.basename(file_path)
+            assert filename == 'model_pipeline.html'
+        
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_filename)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline')
+
+    def test_special_characters_in_title(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test pipeline logging with special characters in title"""
+        def assert_special_chars_handled(file_path, artifact_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Check that special characters are handled (not escaped in f-string)
+            assert '<h1>🔧 Test <Pipeline> & Model</h1>' in content
+            
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_special_chars_handled)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test <Pipeline> & Model')
+
+    def test_run_id_in_title(self, monkeypatch, mock_pipeline, mlf_obj):
+        """Test that run ID is correctly truncated to 8 characters in title"""
+        def assert_run_id_truncated(file_path, artifact_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Run ID should be truncated to first 8 characters (or the full ID if shorter)
+            assert 'SOM Pipeline - 112233' in content  # Full run_id (6 chars, less than 8)
+            
+        monkeypatch.setattr(mlflow, 'log_artifact', assert_run_id_truncated)
+        mlf_obj.log_pipeline(mock_pipeline, 'Test Pipeline')
