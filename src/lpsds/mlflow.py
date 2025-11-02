@@ -1,12 +1,16 @@
 import os
 import re
+import sklearn
 import yaml
 import numpy as np
 import pandas as pd
 import tempfile
 import mlflow
 import lpsds.metrics
+from typing import Dict, Optional
 from lpsds.utils import ObjectView
+from sklearn.utils import estimator_html_repr
+from sklearn.pipeline import Pipeline
 
 
 class MLFlow:
@@ -203,7 +207,6 @@ class MLFlow:
         return self.get_artifact(var_name + '.npy', folder, np.load, allow_pickle=False)
 
 
-
     def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs):
         """"
         def get_artifact(self, var_name: str, folder: str='', load_func=np.load, **load_func_kwargs)
@@ -225,8 +228,6 @@ class MLFlow:
             return load_func(local_path, **load_func_kwargs)
 
 
-
-
     def get_experiment(self) -> mlflow.entities.Experiment:
         """
         def get_experiment(self) -> mlflow.entities.Experiment
@@ -235,3 +236,54 @@ class MLFlow:
         """
         exp_id = self.run.info.experiment_id
         return mlflow.get_experiment(exp_id)
+
+
+    def log_pipeline(self, pipeline: Pipeline, title: str, folder: str='', metadata: Optional[Dict[str, str]] = None) -> None:
+        # Enable diagram display
+        sklearn.set_config(display='diagram')
+
+        # Generate HTML representation of pipeline
+        pipeline_html = estimator_html_repr(pipeline)
+
+        # Save to temporary file with specific name
+        with tempfile.TemporaryDirectory() as temp_dir:
+            pipeline_viz_file = os.path.join(temp_dir, 'model_pipeline.html')
+
+            meta_html = '\n'.join([f'<p><strong>{key}:</strong> {value}</p>' for key, value in metadata.items()]) if metadata else ''
+
+            with open(pipeline_viz_file, 'w', encoding='utf-8') as f:
+                f.write(f"""<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>SOM Pipeline - {self.run.info.run_id[:8]}</title>
+                        <style>
+                            body {{ 
+                                background-color: #1e1e1e; 
+                                color: #d4d4d4;
+                                padding: 20px;
+                                font-family: monospace;
+                            }}
+                            h1 {{ color: #4fc3f7; }}
+                            .metadata {{ 
+                                background: #2d2d2d; 
+                                padding: 15px; 
+                                border-radius: 8px;
+                                margin: 20px 0;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <h1>🔧 {title}</h1>
+                        <div class="metadata">
+                            <p><strong>Run ID:</strong> {self.run.info.run_id}</p>
+                            {meta_html}
+                        </div>
+                        <h2>Pipeline Structure</h2>
+                        {pipeline_html}
+                    </body>
+                    </html>
+                """)
+
+            mlflow.log_artifact(pipeline_viz_file, artifact_path=folder)
