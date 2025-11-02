@@ -109,7 +109,7 @@ class TestInit(MLFlowBase):
 
     @pytest.mark.noautofixt
     def test_call_without_id_without_experiment(self):
-        with pytest. raises(ValueError):
+        with pytest.raises(ValueError):
             MLFlow()
 
 
