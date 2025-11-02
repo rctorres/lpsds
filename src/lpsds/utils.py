@@ -2,7 +2,7 @@ import collections.abc
 import numpy as np
 import pandas as pd
 import sklearn.pipeline
-from typing import Union
+from typing import Dict, Any, Union, Tuple
 from .metrics import bootstrap_estimate
 
 class ObjectView(dict):
@@ -182,3 +182,91 @@ def pipeline_split(model :sklearn.pipeline.Pipeline, X: Union[pd.DataFrame, np.n
             X = func.transform(X)
     
     return pre_processing, estimator, X
+
+
+def loc_multiindex(
+    df: pd.DataFrame, 
+    index_dict: Union[Dict[str, Any], Tuple],
+    default: Any = np.nan
+) -> Union[pd.Series, pd.DataFrame, Any]:
+    """
+    Access MultiIndex DataFrame rows using a dictionary or tuple.
+    
+    Allows querying MultiIndex without worrying about index level order (when using dict),
+    or directly with a tuple.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with MultiIndex
+    index_dict : Dict[str, Any] or Tuple
+        Dictionary mapping index level names to values, or tuple of index values.
+        If dict, keys must match index level names.
+        If tuple, values must match index level order.
+    default : Any, optional
+        Value to return if the index is not found. Default is np.nan.
+        
+    Returns
+    -------
+    pd.Series or pd.DataFrame or Any
+        Matching row(s) from the DataFrame, or default value if not found
+        
+    Raises
+    ------
+    KeyError
+        If index_dict is a dict and keys don't match all index levels
+        
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'a': [1, 2, 3],
+    ...     'b': [4, 5, 6],
+    ...     'value': [7, 8, 9]
+    ... })
+    >>> df.set_index(['a', 'b'], inplace=True)
+    >>> 
+    >>> # Query with dictionary (order-independent)
+    >>> result = loc_multiindex(df, {'b': 4, 'a': 1})
+    >>> print(result)
+    value    7
+    Name: (1, 4), dtype: int64
+    >>> 
+    >>> # Query with tuple (must match index order)
+    >>> result = loc_multiindex(df, (1, 4))
+    >>> print(result)
+    value    7
+    Name: (1, 4), dtype: int64
+    >>> 
+    >>> # Query with default value for missing index
+    >>> result = loc_multiindex(df, {'b': 99, 'a': 1}, default='Not Found')
+    >>> print(result)
+    Not Found
+    
+    Notes
+    -----
+    - Works with any number of index levels
+    - Dict key order doesn't matter
+    - Tuple values must match index level order
+    - Returns Series if single row, DataFrame if multiple rows
+    - Returns default value if index not found
+    """
+    # Handle tuple input directly
+    if isinstance(index_dict, tuple):
+        index_tuple = index_dict
+    else:
+        # Handle dictionary input with validation
+        missing_levels = set(df.index.names) - set(index_dict.keys())
+        if missing_levels:
+            raise KeyError(f"Missing index levels in query: {missing_levels}")
+        
+        # Build tuple in correct index order
+        index_tuple = tuple(index_dict[level] for level in df.index.names)
+    
+    # Access using standard .loc with error handling
+    try:
+        result = df.loc[index_tuple]
+    except KeyError:
+        result = default
+    
+    return result

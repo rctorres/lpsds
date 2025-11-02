@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import sklearn.pipeline
-from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title, error_bar_roc, pipeline_split
+from lpsds.utils import keep, ObjectView, to_list, smart_tuple, confusion_matrix_annotation, pretty_title, error_bar_roc, pipeline_split, loc_multiindex
 
         
 class TestKeep():
@@ -377,3 +377,189 @@ class TestPipelineSplit:
         assert x[0][1] == 13
         assert x[1][0] == 14
         assert x[1][1] == 15
+
+
+class TestLocMultiindex:
+    """Test loc_multiindex function"""
+
+    @pytest.fixture
+    def simple_df(self):
+        """Create a simple 2-level MultiIndex DataFrame"""
+        df = pd.DataFrame({
+            'a': [1, 1, 2, 2],
+            'b': [4, 5, 4, 5],
+            'value': [10, 20, 30, 40]
+        })
+        df.set_index(['a', 'b'], inplace=True)
+        return df
+
+    @pytest.fixture
+    def three_level_df(self):
+        """Create a 3-level MultiIndex DataFrame"""
+        df = pd.DataFrame({
+            'x': [1, 1, 1, 2, 2, 2],
+            'y': ['A', 'A', 'B', 'A', 'A', 'B'],
+            'z': [10, 20, 10, 10, 20, 10],
+            'value': [100, 200, 300, 400, 500, 600]
+        })
+        df.set_index(['x', 'y', 'z'], inplace=True)
+        return df
+
+    def test_query_with_dict_found(self, simple_df):
+        """Test querying with dictionary when index exists"""
+        result = loc_multiindex(simple_df, {'a': 1, 'b': 4})
+        assert isinstance(result, pd.Series)
+        assert result['value'] == 10
+
+    def test_query_with_dict_order_independent(self, simple_df):
+        """Test that dictionary query order doesn't matter"""
+        result1 = loc_multiindex(simple_df, {'a': 1, 'b': 5})
+        result2 = loc_multiindex(simple_df, {'b': 5, 'a': 1})
+        assert result1['value'] == result2['value']
+        assert result1['value'] == 20
+
+    def test_query_with_tuple_found(self, simple_df):
+        """Test querying with tuple when index exists"""
+        result = loc_multiindex(simple_df, (2, 4))
+        assert isinstance(result, pd.Series)
+        assert result['value'] == 30
+
+    def test_query_with_tuple_order_matters(self, simple_df):
+        """Test that tuple query order must match index order"""
+        result = loc_multiindex(simple_df, (2, 5))
+        assert result['value'] == 40
+
+    def test_query_not_found_returns_default(self, simple_df):
+        """Test that missing index returns default value (np.nan)"""
+        result = loc_multiindex(simple_df, {'a': 99, 'b': 99})
+        assert np.isnan(result)
+
+    def test_query_not_found_custom_default(self, simple_df):
+        """Test that missing index returns custom default value"""
+        result = loc_multiindex(simple_df, {'a': 99, 'b': 99}, default='Not Found')
+        assert result == 'Not Found'
+
+    def test_query_not_found_custom_default_tuple(self, simple_df):
+        """Test that missing tuple index returns custom default value"""
+        result = loc_multiindex(simple_df, (99, 99), default=-1)
+        assert result == -1
+
+    def test_three_level_dict_query(self, three_level_df):
+        """Test querying 3-level MultiIndex with dictionary"""
+        result = loc_multiindex(three_level_df, {'x': 1, 'y': 'A', 'z': 10})
+        assert isinstance(result, pd.Series)
+        assert result['value'] == 100
+
+    def test_three_level_tuple_query(self, three_level_df):
+        """Test querying 3-level MultiIndex with tuple"""
+        result = loc_multiindex(three_level_df, (2, 'B', 10))
+        assert isinstance(result, pd.Series)
+        assert result['value'] == 600
+
+    def test_three_level_dict_order_independent(self, three_level_df):
+        """Test that dictionary order doesn't matter for 3-level index"""
+        result1 = loc_multiindex(three_level_df, {'x': 2, 'y': 'A', 'z': 20})
+        result2 = loc_multiindex(three_level_df, {'z': 20, 'x': 2, 'y': 'A'})
+        result3 = loc_multiindex(three_level_df, {'y': 'A', 'z': 20, 'x': 2})
+        assert result1['value'] == result2['value'] == result3['value'] == 500
+
+    def test_missing_index_level_raises_error(self, simple_df):
+        """Test that missing index level in dict raises KeyError"""
+        with pytest.raises(KeyError, match="Missing index levels"):
+            loc_multiindex(simple_df, {'a': 1})
+
+    def test_extra_keys_ignored(self, simple_df):
+        """Test that extra keys in dict are ignored"""
+        # Extra keys should be ignored, only index levels matter
+        result = loc_multiindex(simple_df, {'a': 1, 'b': 4, 'c': 100, 'd': 200})
+        assert isinstance(result, pd.Series)
+        assert result['value'] == 10
+
+    def test_empty_dataframe(self):
+        """Test with empty MultiIndex DataFrame"""
+        df = pd.DataFrame(columns=['value'])
+        df.index = pd.MultiIndex.from_tuples([], names=['a', 'b'])
+        result = loc_multiindex(df, {'a': 1, 'b': 2}, default='empty')
+        assert result == 'empty'
+
+    def test_single_level_index_with_dict(self):
+        """Test that function works with single-level index using dict"""
+        df = pd.DataFrame({'a': [1, 2, 3], 'value': [10, 20, 30]})
+        df.set_index('a', inplace=True)
+        result = loc_multiindex(df, {'a': 2})
+        assert result['value'] == 20
+
+    def test_single_level_index_with_tuple(self):
+        """Test that function works with single-level index using tuple"""
+        df = pd.DataFrame({'a': [1, 2, 3], 'value': [10, 20, 30]})
+        df.set_index('a', inplace=True)
+        result = loc_multiindex(df, (3,))
+        assert result['value'] == 30
+
+    def test_multiple_rows_returned(self):
+        """Test behavior when query matches multiple rows"""
+        # Create a DataFrame where one level can match multiple rows
+        df = pd.DataFrame({
+            'a': [1, 1, 2, 2],
+            'b': [4, 5, 4, 5],
+            'c': ['x', 'y', 'z', 'w'],
+            'value': [10, 20, 30, 40]
+        })
+        df.set_index(['a', 'b'], inplace=True)
+        
+        # Query for a specific row
+        result = loc_multiindex(df, {'a': 1, 'b': 4})
+        assert isinstance(result, pd.Series)
+        assert result['value'] == 10
+
+    def test_numeric_string_mixed_index(self):
+        """Test with mixed numeric and string index levels"""
+        df = pd.DataFrame({
+            'num': [1, 1, 2, 2],
+            'str': ['alpha', 'beta', 'alpha', 'beta'],
+            'value': [100, 200, 300, 400]
+        })
+        df.set_index(['num', 'str'], inplace=True)
+        
+        result = loc_multiindex(df, {'num': 2, 'str': 'alpha'})
+        assert result['value'] == 300
+
+    def test_default_none(self, simple_df):
+        """Test with None as default value"""
+        result = loc_multiindex(simple_df, {'a': 99, 'b': 99}, default=None)
+        assert result is None
+
+    def test_default_zero(self, simple_df):
+        """Test with 0 as default value"""
+        result = loc_multiindex(simple_df, {'a': 99, 'b': 99}, default=0)
+        assert result == 0
+
+    def test_default_dict(self, simple_df):
+        """Test with dictionary as default value"""
+        result = loc_multiindex(simple_df, {'a': 99, 'b': 99}, default={'error': 'not found'})
+        assert result == {'error': 'not found'}
+
+    def test_tuple_with_fewer_elements(self, simple_df):
+        """Test tuple with fewer elements returns DataFrame (partial index match)"""
+        # Too few elements - pandas returns DataFrame with all matching rows
+        result = loc_multiindex(simple_df, (1,))
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 2  # Both rows with a=1
+        assert result.iloc[0]['value'] == 10
+        assert result.iloc[1]['value'] == 20
+        
+    def test_tuple_with_more_elements_raises_error(self, simple_df):
+        """Test tuple with too many elements raises IndexingError"""
+        # Too many elements should raise an error (not caught by try-except)
+        with pytest.raises(Exception):  # pandas.core.indexing.IndexingError
+            loc_multiindex(simple_df, (1, 2, 3))
+
+    def test_preserves_original_dataframe(self, simple_df):
+        """Test that the function doesn't modify the original DataFrame"""
+        original_len = len(simple_df)
+        original_cols = list(simple_df.columns)
+        
+        loc_multiindex(simple_df, {'a': 1, 'b': 4})
+        
+        assert len(simple_df) == original_len
+        assert list(simple_df.columns) == original_cols
